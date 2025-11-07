@@ -1,0 +1,68 @@
+version: '2.4'
+
+# 扩展配置文件 - 用于添加新节点而不修改主 docker-compose.yml
+# 使用方式: docker-compose -f docker-compose.yml -f docker-compose-extend.yml up -d
+
+networks:
+  supplychain:
+    external: true  # 使用已存在的网络
+
+services:
+  # 示例：添加新的 Distributor 组织节点
+  peer0.distributor.supplychain.com:
+    container_name: peer0.distributor.supplychain.com
+    image: hyperledger/fabric-peer:2.5
+    environment:
+      - CORE_PEER_ID=peer0.distributor.supplychain.com
+      - CORE_PEER_ADDRESS=peer0.distributor.supplychain.com:12051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:12051
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:12052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.distributor.supplychain.com:12051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.distributor.supplychain.com:12051
+      - CORE_PEER_LOCALMSPID=DistributorMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/distributor.supplychain.com/peers/peer0.distributor.supplychain.com/msp:/etc/hyperledger/fabric/msp
+      - ../organizations/peerOrganizations/distributor.supplychain.com/peers/peer0.distributor.supplychain.com/tls:/etc/hyperledger/fabric/tls
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    ports:
+      - 12051:12051
+    networks:
+      - supplychain
+
+  # 示例：为现有组织添加第二个 Peer 节点
+  peer1.manufacturer.supplychain.com:
+    container_name: peer1.manufacturer.supplychain.com
+    image: hyperledger/fabric-peer:2.5
+    environment:
+      - CORE_PEER_ID=peer1.manufacturer.supplychain.com
+      - CORE_PEER_ADDRESS=peer1.manufacturer.supplychain.com:7053
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7053
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7054
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.manufacturer.supplychain.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.manufacturer.supplychain.com:7053
+      - CORE_PEER_LOCALMSPID=ManufacturerMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/manufacturer.supplychain.com/peers/peer1.manufacturer.supplychain.com/msp:/etc/hyperledger/fabric/msp
+      - ../organizations/peerOrganizations/manufacturer.supplychain.com/peers/peer1.manufacturer.supplychain.com/tls:/etc/hyperledger/fabric/tls
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    ports:
+      - 7053:7053
+    networks:
+      - supplychain
+    depends_on:
+      - peer0.manufacturer.supplychain.com
+

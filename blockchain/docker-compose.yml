@@ -11,7 +11,7 @@ services:
     environment:
       - FABRIC_LOGGING_SPEC=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
-      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LISTENPORT=${ORDERER_PORT:-7050}
       - ORDERER_GENERAL_GENESISMETHOD=file
       - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
       - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
@@ -27,7 +27,7 @@ services:
       - ../organizations/ordererOrganizations/supplychain.com/orderers/orderer.supplychain.com/tls:/var/hyperledger/orderer/tls
       - ../system-genesis-block/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
     ports:
-      - 7050:7050
+      - "${ORDERER_PORT:-7050}:${ORDERER_PORT:-7050}"
     networks:
       - supplychain
 
@@ -37,11 +37,11 @@ services:
     image: hyperledger/fabric-peer:2.5
     environment:
       - CORE_PEER_ID=peer0.manufacturer.supplychain.com
-      - CORE_PEER_ADDRESS=peer0.manufacturer.supplychain.com:7051
-      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
-      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.manufacturer.supplychain.com:7051
-      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.manufacturer.supplychain.com:7051
+      - CORE_PEER_ADDRESS=peer0.manufacturer.supplychain.com:${MANUFACTURER_PEER_PORT:-7051}
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:${MANUFACTURER_PEER_PORT:-7051}
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:${MANUFACTURER_CHAINCODE_PORT:-7052}
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.manufacturer.supplychain.com:${MANUFACTURER_PEER_PORT:-7051}
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.manufacturer.supplychain.com:${MANUFACTURER_PEER_PORT:-7051}
       - CORE_PEER_LOCALMSPID=ManufacturerMSP
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
@@ -55,7 +55,7 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
-      - 7051:7051
+      - "${MANUFACTURER_PEER_PORT:-7051}:${MANUFACTURER_PEER_PORT:-7051}"
     networks:
       - supplychain
 
@@ -65,11 +65,11 @@ services:
     image: hyperledger/fabric-peer:2.5
     environment:
       - CORE_PEER_ID=peer0.logistics.supplychain.com
-      - CORE_PEER_ADDRESS=peer0.logistics.supplychain.com:9051
-      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
-      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.logistics.supplychain.com:9051
-      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.logistics.supplychain.com:9051
+      - CORE_PEER_ADDRESS=peer0.logistics.supplychain.com:${LOGISTICS_PEER_PORT:-9051}
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:${LOGISTICS_PEER_PORT:-9051}
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:${LOGISTICS_CHAINCODE_PORT:-9052}
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.logistics.supplychain.com:${LOGISTICS_PEER_PORT:-9051}
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.logistics.supplychain.com:${LOGISTICS_PEER_PORT:-9051}
       - CORE_PEER_LOCALMSPID=LogisticsMSP
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
@@ -83,7 +83,7 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
-      - 9051:9051
+      - "${LOGISTICS_PEER_PORT:-9051}:${LOGISTICS_PEER_PORT:-9051}"
     networks:
       - supplychain
 
@@ -93,11 +93,11 @@ services:
     image: hyperledger/fabric-peer:2.5
     environment:
       - CORE_PEER_ID=peer0.retailer.supplychain.com
-      - CORE_PEER_ADDRESS=peer0.retailer.supplychain.com:11051
-      - CORE_PEER_LISTENADDRESS=0.0.0.0:11051
-      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:11052
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.retailer.supplychain.com:11051
-      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.retailer.supplychain.com:11051
+      - CORE_PEER_ADDRESS=peer0.retailer.supplychain.com:${RETAILER_PEER_PORT:-11051}
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:${RETAILER_PEER_PORT:-11051}
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:${RETAILER_CHAINCODE_PORT:-11052}
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.retailer.supplychain.com:${RETAILER_PEER_PORT:-11051}
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.retailer.supplychain.com:${RETAILER_PEER_PORT:-11051}
       - CORE_PEER_LOCALMSPID=RetailerMSP
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
@@ -111,6 +111,6 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
-      - 11051:11051
+      - "${RETAILER_PEER_PORT:-11051}:${RETAILER_PEER_PORT:-11051}"
     networks:
       - supplychain
