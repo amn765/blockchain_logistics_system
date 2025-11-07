@@ -3,9 +3,26 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { Gateway, Wallets } = require('fabric-network');
-const path = require('path');
+// const { Gateway, Wallets } = require('fabric-network');
+// const path = require('path');
+const fs = require('fs');
+const authRoutes = require('./routes/auth');
+const auth = require('./middleware/auth')
 require('dotenv').config();
+
+// 模型
+const User = require('./models/User');
+const Product = require('./models/Product');
+const LogisticsRecord = require('./models/LogisticsRecord');
+const Transaction = require('./models/Transaction');
+
+// 文件上传
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' }); // 配置 multer 用于文件上传
+const path = require('path'); // 用于服务静态文件
+
+// 静态文件服务
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,7 +52,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/supplycha
 let gateway;
 let network;
 let contract;
-
+contract = require('./fabricMock');
+/*
 async function connectToFabric() {
     try {
         // Load the network configuration
@@ -76,14 +94,17 @@ async function connectToFabric() {
 
 // Initialize Fabric connection
 connectToFabric();
-
+*/
 // Routes
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Supply Chain API is running' });
 });
 
-// Product routes
-app.get('/api/products', async (req, res) => {
+// Authentication routes
+app.use('/api/auth', authRoutes);
+
+// Product routes (Protected)
+app.get('/api/products', auth, async (req, res) => {
     try {
         const result = await contract.evaluateTransaction('GetAllProducts');
         const products = JSON.parse(result.toString());
@@ -94,18 +115,56 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
-app.post('/api/products', async (req, res) => {
+// 替换原有的 POST /api/products 路由
+app.post('/api/products', auth, async (req, res) => {
     try {
-        const { id, name, description, owner } = req.body;
-        await contract.submitTransaction('CreateProduct', id, name, description, owner);
-        res.json({ message: 'Product created successfully' });
+        // 1. 从 req.body 获取数据 (匹配 AddBatchForm.tsx)
+        const { sku, batchNo, quantity, productionDate, metadata, reference } = req.body;
+        const owner = req.user.companyName; // 来自 auth 中间件
+        const productId = `prod-${batchNo || Date.now()}`; // 生成唯一ID
+
+        // 2. (模拟) 提交到 Fabric
+        // 参数匹配 supplychain.go 的 CreateProduct
+        await contract.submitTransaction(
+            'CreateProduct',
+            productId,
+            sku, // 对应链码的 'name'
+            metadata.origin || 'N/A', // 对应链码的 'description'
+            owner
+        );
+
+        // 3. 真实写入 MongoDB (使用你的 Product 模型)
+        const newProduct = new Product({
+            id: productId,
+            name: sku, // (或另一个字段, 确保与模型匹配)
+            sku: sku,
+            batchNo: batchNo,
+            quantity: quantity,
+            productionDate: productionDate,
+            owner: owner,
+            status: 'pending', // 初始状态
+            currentLocation: metadata.origin || 'Factory',
+            currentActor: owner,
+            gcReportId: metadata.gcReportId,
+            reference: reference // 用于关联订单
+        });
+        await newProduct.save();
+
+        // 4. 返回前端 AddBatchForm.tsx 期望的结构
+        res.status(201).json({
+            productId: newProduct.id,
+            ledgerTxId: `tx-mock-${Date.now()}`,
+            status: newProduct.status,
+            qrCodeData: `PRODUCT-${sku}-${batchNo}`
+        });
+
     } catch (error) {
         console.error('Error creating product:', error);
         res.status(500).json({ error: 'Failed to create product' });
     }
 });
 
-app.put('/api/products/:id/transfer', async (req, res) => {
+app.put('/api/products/:id/transfer', auth, async (req, res) => {
     try {
         const { id } = req.params;
         const { newOwner } = req.body;
@@ -117,8 +176,8 @@ app.put('/api/products/:id/transfer', async (req, res) => {
     }
 });
 
-// Transaction routes
-app.post('/api/transactions', async (req, res) => {
+// Transaction routes (Protected)
+app.post('/api/transactions', auth, async (req, res) => {
     try {
         const { id, productId, from, to, amount, currency } = req.body;
         await contract.submitTransaction('CreateTransaction', id, productId, from, to, amount.toString(), currency);
@@ -129,8 +188,8 @@ app.post('/api/transactions', async (req, res) => {
     }
 });
 
-// Logistics routes
-app.post('/api/logistics', async (req, res) => {
+// Logistics routes (Protected)
+app.post('/api/logistics', auth, async (req, res) => {
     try {
         const { id, productId, location, status, handler, notes } = req.body;
         await contract.submitTransaction('UpdateLogisticsRecord', id, productId, location, status, handler, notes);
@@ -138,6 +197,99 @@ app.post('/api/logistics', async (req, res) => {
     } catch (error) {
         console.error('Error updating logistics:', error);
         res.status(500).json({ error: 'Failed to update logistics record' });
+    }
+});
+
+// 文件上传路由 (Protected) - 用于上传质检报告
+app.post('/api/products/upload-file', auth, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {// Product routes (Protected)
+app.get('/api/products', auth, async (req, res) => {
+    try {
+        const result = await contract.evaluateTransaction('GetAllProducts');
+        const products = JSON.parse(result.toString());
+        res.json(products);
+    } catch (error) {
+        console.error('Error getting products:', error);
+        res.status(500).json({ error: 'Failed to get products' });
+    }
+});
+
+// 替换原有的 POST /api/products 路由
+app.post('/api/products', auth, async (req, res) => {
+    try {
+        // 1. 从 req.body 获取数据 (匹配 AddBatchForm.tsx)
+        const { sku, batchNo, quantity, productionDate, metadata, reference } = req.body;
+        const owner = req.user.companyName; // 来自 auth 中间件
+        const productId = `prod-${batchNo || Date.now()}`; // 生成唯一ID
+
+        // 2. (模拟) 提交到 Fabric
+        // 参数匹配 supplychain.go 的 CreateProduct
+        await contract.submitTransaction(
+            'CreateProduct',
+            productId,
+            sku, // 对应链码的 'name'
+            metadata.origin || 'N/A', // 对应链码的 'description'
+            owner
+        );
+
+        // 3. 真实写入 MongoDB (使用你的 Product 模型)
+        const newProduct = new Product({
+            id: productId,
+            name: sku, // (或另一个字段, 确保与模型匹配)
+            sku: sku,
+            batchNo: batchNo,
+            quantity: quantity,
+            productionDate: productionDate,
+            owner: owner,
+            status: 'pending', // 初始状态
+            currentLocation: metadata.origin || 'Factory',
+            currentActor: owner,
+            gcReportId: metadata.gcReportId,
+            reference: reference // 用于关联订单
+        });
+        await newProduct.save();
+
+        // 4. 返回前端 AddBatchForm.tsx 期望的结构
+        res.status(201).json({
+            productId: newProduct.id,
+            ledgerTxId: `tx-mock-${Date.now()}`,
+            status: newProduct.status,
+            qrCodeData: `PRODUCT-${sku}-${batchNo}`
+        });
+
+    } catch (error) {
+        console.error('Error creating product:', error);
+        res.status(500).json({ error: 'Failed to create product' });
+    }
+});
+
+app.put('/api/products/:id/transfer', auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newOwner } = req.body;
+        await contract.submitTransaction('TransferProduct', id, newOwner);
+        res.json({ message: 'Product transferred successfully' });
+    } catch (error) {
+        console.error('Error transferring product:', error);
+        res.status(500).json({ error: 'Failed to transfer product' });
+    }
+});
+
+            return res.status(400).json({ error: '没有上传文件' });
+        }
+
+        // 返回文件信息
+        res.json({
+            fileId: req.file.filename,  // 使用 multer 生成的文件名作为 fileId
+            fileName: req.file.originalname,
+            fileSize: req.file.size,
+            mimeType: req.file.mimetype,
+            url: `/uploads/${req.file.filename}`  // 文件访问路径
+        });
+    } catch (error) {
+        console.error('文件上传错误:', error);
+        res.status(500).json({ error: '文件上传失败' });
     }
 });
 
