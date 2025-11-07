@@ -8,7 +8,7 @@ module.exports = {
     env: process.env.NODE_ENV || 'development'
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'your_jwt_secret_key_here',
+    secret: process.env.JWT_SECRET || 'ZJU_2025Fall_SupplyChain_SecretKey',
     expire: process.env.JWT_EXPIRE || '24h'
   },
   fabric: {
@@ -19,3 +19,4 @@ module.exports = {
     user: process.env.FABRIC_USER || 'appUser'
   }
 };
+

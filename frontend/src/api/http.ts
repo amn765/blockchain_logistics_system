@@ -1,22 +1,48 @@
+import { Email } from "@mui/icons-material";
+import axios from "axios";
+
+const API_BASE_URL = "http://localhost:3001/api";
+
+
+
 // src/api/http.ts
 // 当前使用 mock 返回，后端 ready 后把实现改为 axios 实际调用
 export const api = {
   auth: {
     login: async (email: string, password: string) => {
       // mock 登录：若邮箱非空直接返回 token
-      if (email && password) {
-        return { 
-          token: "mock-jwt-token", 
-          user: { 
-            id: "mock-user-id",
-            email: email, 
-            name: "Demo Company",
-            role: "manufacturer",
-            companyId: "mock-company-id"
-          } 
-        };
+      // if (email && password) {
+      //   return { 
+      //     token: "mock-jwt-token", 
+      //     user: { 
+      //       id: "mock-user-id",
+      //       email: email, 
+      //       name: "Demo Company",
+      //       role: "manufacturer",
+      //       companyId: "mock-company-id"
+      //     } 
+      //   };
+      // }
+      // throw new Error("Invalid credentials");
+      try {
+        // 4. 发起一个 POST 请求到你的后端 /api/auth/login 路由
+        const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+          email: email,
+          password: password
+        });
+
+        // 5. 返回后端传回的真实数据 (token 和 user)
+        return response.data;
+
+      } catch (error: any) {
+        // 6. 如果登录失败 (例如 401)，抛出错误
+        // 登录组件 会捕获这个错误
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.message || '登录失败');
+          // throw new Error(error.response.data.error || '登录失败');
+        }
+        throw new Error('网络连接错误');
       }
-      throw new Error("Invalid credentials");
     },
 
     register: async (userData: {
@@ -28,19 +54,36 @@ export const api = {
       companyType: string;
     }) => {
       // mock 注册：如果邮箱非空就返回成功
-      if (userData.email && userData.password) {
-        return {
-          token: "mock-jwt-token-for-registration",
-          user: {
-            id: "mock-user-id",
-            email: userData.email,
-            name: userData.companyName,
-            role: "manufacturer",
-            companyId: "mock-company-id"
-          }
-        };
+      // if (userData.email && userData.password) {
+      //   return {
+      //     token: "mock-jwt-token-for-registration",
+      //     user: {
+      //       id: "mock-user-id",
+      //       email: userData.email,
+      //       name: userData.companyName,
+      //       role: "manufacturer",
+      //       companyId: "mock-company-id"
+      //     }
+      //   };
+      // }
+      // throw new Error("Registration failed");
+      try {
+        const response = await axios.post(`${API_BASE_URL}/auth/register`, {
+          email: userData.email,
+          password: userData.password,
+          companyName: userData.companyName,
+          contactPerson: userData.contactPerson,
+          licenseNumber: userData.licenseNumber,
+          companyType: userData.companyType,
+        })
+
+        return response.data;
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '注册失败');
+        }
+        throw new Error('网络连接错误');
       }
-      throw new Error("Registration failed");
     },
   },
 
@@ -520,3 +563,4 @@ export const api = {
   },
   
 };
+
