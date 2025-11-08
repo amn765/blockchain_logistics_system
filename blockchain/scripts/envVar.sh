@@ -52,9 +52,36 @@ export RETAILER_PEER_PORT=${RETAILER_PEER_PORT:-11051}
 export RETAILER_CHAINCODE_PORT=${RETAILER_CHAINCODE_PORT:-11052}
 
 # Peer addresses (using dynamic ports)
-export PEER0_MANUFACTURER=peer0.manufacturer.supplychain.com:${MANUFACTURER_PEER_PORT}
-export PEER0_LOGISTICS=peer0.logistics.supplychain.com:${LOGISTICS_PEER_PORT}
-export PEER0_RETAILER=peer0.retailer.supplychain.com:${RETAILER_PEER_PORT}
+# For connections from host scripts, use localhost instead of hostnames
+export PEER0_MANUFACTURER=localhost:${MANUFACTURER_PEER_PORT}
+export PEER0_LOGISTICS=localhost:${LOGISTICS_PEER_PORT}
+export PEER0_RETAILER=localhost:${RETAILER_PEER_PORT}
 
 # Orderer address (using dynamic port)
 export ORDERER_ADDRESS=orderer.supplychain.com:${ORDERER_PORT}
+
+# Orderer TLS CA certificate
+# IMPORTANT: Must use tls/ca.crt (signed by fabric-tlsca-server), not msp/tlscacerts
+# Use absolute path to avoid issues with PWD
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Try tls/ca.crt first (this is the correct one for orderer TLS)
+ORDERER_TLS_CA="${ROOT_DIR}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/tls/ca.crt"
+if [ -f "${ORDERER_TLS_CA}" ]; then
+    export ORDERER_CA=${ORDERER_TLS_CA}
+else
+    # Fallback to PWD if ROOT_DIR doesn't work
+    ORDERER_TLS_CA="${PWD}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/tls/ca.crt"
+    if [ -f "${ORDERER_TLS_CA}" ]; then
+        export ORDERER_CA=${ORDERER_TLS_CA}
+    else
+        # Last resort: use msp/tlscacerts (may not work, but better than nothing)
+        ORDERER_TLS_CA="${ROOT_DIR}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/msp/tlscacerts/tlsca.${ORDERER_DOMAIN}-cert.pem"
+        if [ -f "${ORDERER_TLS_CA}" ]; then
+            export ORDERER_CA=${ORDERER_TLS_CA}
+        else
+            export ORDERER_CA="${PWD}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/msp/tlscacerts/tlsca.${ORDERER_DOMAIN}-cert.pem"
+        fi
+    fi
+fi

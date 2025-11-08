@@ -3,19 +3,32 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# ---------------------------------------------------------------------------
+# "OrdererOrgs" - Definition of organizations managing orderer nodes
+# ---------------------------------------------------------------------------
 OrdererOrgs:
   - Name: Orderer
     Domain: supplychain.com
     EnableNodeOUs: true
     Specs:
       - Hostname: orderer
+        SANS:
+          - localhost
+          - 127.0.0.1
+          - orderer.supplychain.com
 
+# ---------------------------------------------------------------------------
+# "PeerOrgs" - Definition of organizations managing peer nodes
+# ---------------------------------------------------------------------------
 PeerOrgs:
   - Name: Manufacturer
     Domain: manufacturer.supplychain.com
     EnableNodeOUs: true
     Template:
       Count: 1
+      SANS:
+        - localhost
+        - 127.0.0.1
     Users:
       Count: 1
 
@@ -24,6 +37,9 @@ PeerOrgs:
     EnableNodeOUs: true
     Template:
       Count: 1
+      SANS:
+        - localhost
+        - 127.0.0.1
     Users:
       Count: 1
 
@@ -32,6 +48,9 @@ PeerOrgs:
     EnableNodeOUs: true
     Template:
       Count: 1
+      SANS:
+        - localhost
+        - 127.0.0.1
     Users:
       Count: 1
 

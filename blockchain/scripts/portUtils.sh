@@ -11,20 +11,25 @@
 checkPortAvailable() {
     local port=$1
     
-    # Check if port is in use
-    if command -v netstat >/dev/null 2>&1; then
-        netstat -tuln | grep -q ":$port " && return 1
-    elif command -v ss >/dev/null 2>&1; then
-        ss -tuln | grep -q ":$port " && return 1
+    # Check if port is in use using the fastest method first
+    if command -v ss >/dev/null 2>&1; then
+        ss -tuln 2>/dev/null | grep -q ":$port " && return 1
+    elif command -v netstat >/dev/null 2>&1; then
+        netstat -tuln 2>/dev/null | grep -q ":$port " && return 1
     elif command -v lsof >/dev/null 2>&1; then
         lsof -i :$port >/dev/null 2>&1 && return 1
     else
-        # Fallback: try to bind to the port
-        (echo >/dev/tcp/localhost/$port) >/dev/null 2>&1 && return 1
+        # Fallback: try to bind to the port (timeout after 1 second)
+        timeout 1 bash -c "echo >/dev/tcp/localhost/$port" >/dev/null 2>&1 && return 1
     fi
     
-    # Check Docker containers
-    docker ps --format '{{.Ports}}' | grep -q ":$port->" && return 1
+    # Check Docker containers (with timeout to avoid hanging)
+    if command -v timeout >/dev/null 2>&1; then
+        timeout 2 docker ps --format '{{.Ports}}' 2>/dev/null | grep -q ":$port->" && return 1
+    else
+        # Without timeout, use a quick check
+        docker ps --format '{{.Ports}}' 2>/dev/null | grep -q ":$port->" && return 1
+    fi
     
     return 0
 }
@@ -176,6 +181,7 @@ checkAllPorts() {
     local all_available=true
     
     # Check orderer port
+    printInfo "Checking orderer port $ORDERER_PORT..."
     if checkPortAvailable $ORDERER_PORT; then
         printSuccess "Orderer port $ORDERER_PORT is available"
     else
@@ -184,6 +190,7 @@ checkAllPorts() {
     fi
     
     # Check manufacturer ports
+    printInfo "Checking manufacturer ports..."
     if checkPortAvailable $MANUFACTURER_PEER_PORT; then
         printSuccess "Manufacturer peer port $MANUFACTURER_PEER_PORT is available"
     else
@@ -199,6 +206,7 @@ checkAllPorts() {
     fi
     
     # Check logistics ports
+    printInfo "Checking logistics ports..."
     if checkPortAvailable $LOGISTICS_PEER_PORT; then
         printSuccess "Logistics peer port $LOGISTICS_PEER_PORT is available"
     else
@@ -214,6 +222,7 @@ checkAllPorts() {
     fi
     
     # Check retailer ports
+    printInfo "Checking retailer ports..."
     if checkPortAvailable $RETAILER_PEER_PORT; then
         printSuccess "Retailer peer port $RETAILER_PEER_PORT is available"
     else

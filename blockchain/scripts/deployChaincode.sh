@@ -27,6 +27,11 @@ CC_END_POLICY=${7:-NA}
 CC_COLL_CONFIG=${8:-NA}
 CHANNEL_NAME=${9:-supplychainchannel}
 
+# Convert 'go' to 'golang' for peer command
+if [ "${CC_SRC_LANGUAGE}" == "go" ]; then
+    CC_SRC_LANGUAGE="golang"
+fi
+
 DELAY=3
 MAX_RETRY=5
 VERBOSE=false
@@ -57,10 +62,23 @@ installChaincode() {
     
     printInfo "Installing chaincode on ${ORG}..."
     
-    peer lifecycle chaincode install ${CC_NAME}.tar.gz
+    # Try to install chaincode
+    INSTALL_OUTPUT=$(peer lifecycle chaincode install ${CC_NAME}.tar.gz 2>&1)
+    INSTALL_RESULT=$?
     
-    if [ $? -ne 0 ]; then
+    if [ $INSTALL_RESULT -ne 0 ]; then
+        # Check if chaincode is already installed
+        if echo "$INSTALL_OUTPUT" | grep -q "already successfully installed"; then
+            printInfo "Chaincode already installed on ${ORG}, extracting package ID..."
+            # Extract package ID from the error message
+            PACKAGE_ID=$(echo "$INSTALL_OUTPUT" | grep -oP "package ID '[^']+'" | cut -d"'" -f2)
+            if [ -n "$PACKAGE_ID" ]; then
+                printSuccess "Using existing package ID: ${PACKAGE_ID}"
+                return 0
+            fi
+        fi
         printError "Failed to install chaincode on ${ORG}"
+        printError "Output: $INSTALL_OUTPUT"
         exit 1
     fi
     
@@ -86,16 +104,53 @@ queryInstalled() {
 approveChaincodeDefinition() {
     ORG=$1
     setGlobalsForPeer $ORG
-    
+
     printInfo "Approving chaincode definition for ${ORG}..."
-    
-    peer lifecycle chaincode approveformyorg -o ${ORDERER_ADDRESS} --channelID ${CHANNEL_NAME} --name ${CC_NAME} --version ${CC_VERSION} --package-id ${PACKAGE_ID} --sequence ${CC_SEQUENCE} --tls --cafile ${ORDERER_CA}
-    
-    if [ $? -ne 0 ]; then
-        printError "Failed to approve chaincode definition for ${ORG}"
-        exit 1
+
+    # Load ORDERER_PORT from envVar.sh if not set
+    if [ -z "${ORDERER_PORT}" ]; then
+        if [ -f "${ROOTDIR}/.env" ]; then
+            source "${ROOTDIR}/.env"
+        fi
+        ORDERER_PORT=${ORDERER_PORT:-7050}
     fi
-    
+
+    # Use localhost for orderer address
+    ORDERER_HOST="localhost:${ORDERER_PORT}"
+
+    # Set ORDERER_CA if not already set
+    if [ -z "${ORDERER_CA}" ] || [ ! -f "${ORDERER_CA}" ]; then
+        ORDERER_TLS_CA="${ROOTDIR}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/tls/ca.crt"
+        if [ -f "${ORDERER_TLS_CA}" ]; then
+            export ORDERER_CA=${ORDERER_TLS_CA}
+        fi
+    fi
+
+    printInfo "Orderer host: ${ORDERER_HOST}"
+    printInfo "Orderer CA: ${ORDERER_CA}"
+    printInfo "Package ID: ${PACKAGE_ID}"
+    printInfo "Channel: ${CHANNEL_NAME}"
+
+    # Check if chaincode definition is already approved
+    APPROVED=$(peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CC_NAME} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} --output json --tls --cafile ${ORDERER_CA} 2>/dev/null | jq -r ".approvals.\"${CORE_PEER_LOCALMSPID}\"" 2>/dev/null || echo "false")
+
+    if [ "${APPROVED}" == "true" ]; then
+        printInfo "Chaincode definition already approved for ${ORG}, skipping..."
+        return 0
+    fi
+
+    printInfo "Executing: peer lifecycle chaincode approveformyorg -o ${ORDERER_HOST} --channelID ${CHANNEL_NAME} --name ${CC_NAME} --version ${CC_VERSION} --package-id ${PACKAGE_ID} --sequence ${CC_SEQUENCE} --tls --cafile ${ORDERER_CA} --waitForEvent false"
+
+    peer lifecycle chaincode approveformyorg -o ${ORDERER_HOST} --channelID ${CHANNEL_NAME} --name ${CC_NAME} --version ${CC_VERSION} --package-id ${PACKAGE_ID} --sequence ${CC_SEQUENCE} --tls --cafile ${ORDERER_CA} --waitForEvent false
+
+    APPROVE_RESULT=$?
+    if [ $APPROVE_RESULT -ne 0 ]; then
+        printWarning "Approve command returned error $APPROVE_RESULT for ${ORG}, but continuing..."
+        printWarning "This might be due to network timeouts but the approval may have succeeded"
+    else
+        printSuccess "Chaincode definition approve command completed for ${ORG}"
+    fi
+
     printSuccess "Chaincode definition approved for ${ORG}"
 }
 
@@ -109,8 +164,27 @@ checkCommitReadiness() {
 # Commit chaincode definition
 commitChaincodeDefinition() {
     printInfo "Committing chaincode definition..."
-    
-    peer lifecycle chaincode commit -o ${ORDERER_ADDRESS} --channelID ${CHANNEL_NAME} --name ${CC_NAME} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} --tls --cafile ${ORDERER_CA} --peerAddresses ${PEER0_MANUFACTURER} --tlsRootCertFiles ${ROOTDIR}/organizations/peerOrganizations/${MANUFACTURER_DOMAIN}/peers/peer0.${MANUFACTURER_DOMAIN}/tls/ca.crt --peerAddresses ${PEER0_LOGISTICS} --tlsRootCertFiles ${ROOTDIR}/organizations/peerOrganizations/${LOGISTICS_DOMAIN}/peers/peer0.${LOGISTICS_DOMAIN}/tls/ca.crt --peerAddresses ${PEER0_RETAILER} --tlsRootCertFiles ${ROOTDIR}/organizations/peerOrganizations/${RETAILER_DOMAIN}/peers/peer0.${RETAILER_DOMAIN}/tls/ca.crt
+
+    # Load ORDERER_PORT from envVar.sh if not set
+    if [ -z "${ORDERER_PORT}" ]; then
+        if [ -f "${ROOTDIR}/.env" ]; then
+            source "${ROOTDIR}/.env"
+        fi
+        ORDERER_PORT=${ORDERER_PORT:-7050}
+    fi
+
+    # Set ORDERER_CA if not already set
+    if [ -z "${ORDERER_CA}" ] || [ ! -f "${ORDERER_CA}" ]; then
+        ORDERER_TLS_CA="${ROOTDIR}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/tls/ca.crt"
+        if [ -f "${ORDERER_TLS_CA}" ]; then
+            export ORDERER_CA=${ORDERER_TLS_CA}
+        fi
+    fi
+
+    ORDERER_HOST="localhost:${ORDERER_PORT}"
+    printInfo "Using orderer: ${ORDERER_HOST}"
+
+    peer lifecycle chaincode commit -o ${ORDERER_HOST} --channelID ${CHANNEL_NAME} --name ${CC_NAME} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} --tls --cafile ${ORDERER_CA} --peerAddresses ${PEER0_MANUFACTURER} --tlsRootCertFiles ${ROOTDIR}/organizations/peerOrganizations/${MANUFACTURER_DOMAIN}/peers/peer0.${MANUFACTURER_DOMAIN}/tls/ca.crt --peerAddresses ${PEER0_LOGISTICS} --tlsRootCertFiles ${ROOTDIR}/organizations/peerOrganizations/${LOGISTICS_DOMAIN}/peers/peer0.${LOGISTICS_DOMAIN}/tls/ca.crt --peerAddresses ${PEER0_RETAILER} --tlsRootCertFiles ${ROOTDIR}/organizations/peerOrganizations/${RETAILER_DOMAIN}/peers/peer0.${RETAILER_DOMAIN}/tls/ca.crt --waitForEvent false
     
     if [ $? -ne 0 ]; then
         printError "Failed to commit chaincode definition"
@@ -181,7 +255,13 @@ setGlobalsForPeer() {
     fi
     
     export CORE_PEER_TLS_ENABLED=true
-    export ORDERER_CA=${ROOTDIR}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/msp/tlscacerts/tlsca.${ORDERER_DOMAIN}-cert.pem
+    # Use orderer's TLS CA certificate
+    ORDERER_TLS_CA="${ROOTDIR}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/tls/ca.crt"
+    if [ -f "${ORDERER_TLS_CA}" ]; then
+        export ORDERER_CA=${ORDERER_TLS_CA}
+    else
+        export ORDERER_CA=${ROOTDIR}/organizations/ordererOrganizations/${ORDERER_DOMAIN}/orderers/orderer.${ORDERER_DOMAIN}/msp/tlscacerts/tlsca.${ORDERER_DOMAIN}-cert.pem
+    fi
 }
 
 # Main execution

@@ -15,7 +15,7 @@ Before starting, ensure you have the following installed:
 2. **Hyperledger Fabric Binaries**
    Download Fabric binaries (v2.5) and place them in `../bin` directory:
    ```bash
-   curl -sSL https://bit.ly/2ysbOFE | bash -s -- 2.5.0 1.5.0
+   curl -sSL https://bit.ly/2ysbOFE | bash -s -- 2.5.0 1.5.5
    ```
    This will create a `bin` directory with necessary tools.
 

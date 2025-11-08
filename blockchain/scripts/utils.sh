@@ -22,7 +22,12 @@ ROOTDIR="$(dirname "$DIR")"
 export FABRIC_CFG_PATH=${ROOTDIR}/config
 
 # Set PATH to include necessary binaries
-export PATH=${ROOTDIR}/../bin:$PATH
+# Check multiple possible locations for bin directory
+if [ -d "${ROOTDIR}/../bin" ]; then
+    export PATH=${ROOTDIR}/../bin:$PATH
+elif [ -d "${ROOTDIR}/../fabric-samples/bin" ]; then
+    export PATH=${ROOTDIR}/../fabric-samples/bin:$PATH
+fi
 
 # Colors for output
 RED='\033[0;31m'
@@ -52,20 +57,38 @@ printWarning() {
 checkPrereqs() {
     printInfo "Checking prerequisites..."
     
-    if [ ! -d "${ROOTDIR}/../bin" ]; then
+    # Determine bin directory location
+    BIN_DIR=""
+    if [ -d "${ROOTDIR}/../bin" ] && [ -f "${ROOTDIR}/../bin/configtxgen" ]; then
+        BIN_DIR="${ROOTDIR}/../bin"
+    elif [ -d "${ROOTDIR}/../fabric-samples/bin" ] && [ -f "${ROOTDIR}/../fabric-samples/bin/configtxgen" ]; then
+        BIN_DIR="${ROOTDIR}/../fabric-samples/bin"
+    fi
+    
+    if [ -z "$BIN_DIR" ]; then
         printError "Binaries directory not found. Please download Fabric binaries first."
+        printError "Expected locations:"
+        printError "  - ${ROOTDIR}/../bin"
+        printError "  - ${ROOTDIR}/../fabric-samples/bin"
         exit 1
     fi
     
-    if [ ! -f "${ROOTDIR}/../bin/configtxgen" ]; then
-        printError "configtxgen not found. Please download Fabric binaries."
+    # Update PATH if needed
+    if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+        export PATH="$BIN_DIR:$PATH"
+    fi
+    
+    if [ ! -f "$BIN_DIR/configtxgen" ]; then
+        printError "configtxgen not found in $BIN_DIR. Please download Fabric binaries."
         exit 1
     fi
     
-    if [ ! -f "${ROOTDIR}/../bin/cryptogen" ]; then
-        printError "cryptogen not found. Please download Fabric binaries."
+    if [ ! -f "$BIN_DIR/cryptogen" ]; then
+        printError "cryptogen not found in $BIN_DIR. Please download Fabric binaries."
         exit 1
     fi
+    
+    printInfo "Using binaries from: $BIN_DIR"
     
     if ! command -v docker &> /dev/null; then
         printError "Docker is not installed or not in PATH."

@@ -1,0 +1,226 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Fabric CA Server Configuration for TLS CA
+
+version: 1.5.5
+
+# Server's listening port for TLS CA
+port: 7055
+
+# Cross-Origin Resource Sharing (CORS)
+cors:
+    enabled: false
+    origins:
+      - "*"
+
+# Enables debug logging
+debug: false
+
+# Size limit of an acceptable CRL in bytes
+crlsizelimit: 512000
+
+#############################################################################
+#  TLS section for the server's listening port
+#############################################################################
+tls:
+  enabled: false
+  certfile:
+  keyfile:
+  clientauth:
+    type: noclientcert
+    certfiles:
+
+#############################################################################
+#  The CA section
+#############################################################################
+ca:
+  name: tlsca-supplychain
+  keyfile:
+  certfile:
+  chainfile:
+
+#############################################################################
+#  CRL section
+#############################################################################
+crl:
+  expiry: 24h
+
+#############################################################################
+#  Registry section
+#############################################################################
+registry:
+  maxenrollments: -1
+  identities:
+     - name: admin
+       pass: adminpw
+       type: client
+       affiliation: ""
+       attrs:
+          hf.Registrar.Roles: "*"
+          hf.Registrar.DelegateRoles: "*"
+          hf.Revoker: true
+          hf.IntermediateCA: true
+          hf.GenCRL: true
+          hf.Registrar.Attributes: "*"
+          hf.AffiliationMgr: true
+
+#############################################################################
+#  Database section
+#############################################################################
+db:
+  type: sqlite3
+  datasource: fabric-ca-server.db
+  tls:
+      enabled: false
+      certfiles:
+      client:
+        certfile:
+        keyfile:
+
+#############################################################################
+#  LDAP section
+#############################################################################
+ldap:
+   enabled: false
+   url: ldap://<adminDN>:<adminPassword>@<host>:<port>/<base>
+   tls:
+      certfiles:
+      client:
+         certfile:
+         keyfile:
+   attribute:
+      names: ['uid','member']
+      converters:
+         - name:
+           value:
+      maps:
+         groups:
+            - name:
+              value:
+
+#############################################################################
+# Affiliations section
+#############################################################################
+affiliations:
+   supplychain:
+      - manufacturer
+      - logistics
+      - retailer
+
+#############################################################################
+#  Signing section - TLS profile for TLS certificates
+#############################################################################
+signing:
+  default:
+    authremote: {}
+    caconstraint: {}
+    expiry: 8760h
+    usage:
+    - signing
+    - key encipherment
+    - server auth
+    - client auth
+    - key agreement
+  profiles: null
+
+###########################################################################
+#  Certificate Signing Request (CSR) section
+###########################################################################
+csr:
+   cn: fabric-tlsca-server
+   keyrequest:
+     algo: ecdsa
+     size: 256
+   names:
+      - C: US
+        ST: "State"
+        L: "City"
+        O: Hyperledger
+        OU: Fabric
+   hosts:
+     - localhost
+     - 127.0.0.1
+   ca:
+      expiry: 131400h
+      pathlength: 1
+
+###########################################################################
+# Idemix section
+###########################################################################
+idemix:
+  rhpoolsize: 1000
+  nonceexpiration: 15s
+  noncesweepinterval: 15m
+
+#############################################################################
+# BCCSP section
+#############################################################################
+bccsp:
+    default: SW
+    sw:
+        hash: SHA2
+        security: 256
+        filekeystore:
+            keystore: msp/keystore
+
+#############################################################################
+# Multi CA section
+#############################################################################
+cacount:
+
+cafiles:
+
+#############################################################################
+# Intermediate CA section
+#############################################################################
+intermediate:
+  parentserver:
+    url:
+    caname:
+
+  enrollment:
+    hosts:
+    profile:
+    label:
+
+  tls:
+    certfiles:
+    client:
+      certfile:
+      keyfile:
+
+#############################################################################
+# CA configuration section
+#############################################################################
+cfg:
+  identities:
+    passwordattempts: 10
+
+###############################################################################
+# Operations section
+###############################################################################
+operations:
+    listenAddress: 127.0.0.1:9444
+    tls:
+        enabled: false
+        cert:
+            file:
+        key:
+            file:
+        clientAuthRequired: false
+        clientRootCAs:
+            files: []
+
+###############################################################################
+# Metrics section
+###############################################################################
+metrics:
+    provider: disabled
+    statsd:
+        network: udp
+        address: 127.0.0.1:8125
+        writeInterval: 10s
+        prefix: tlsca
+
