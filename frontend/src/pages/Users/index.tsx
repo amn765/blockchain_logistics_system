@@ -30,6 +30,7 @@ export default function Users() {
   const loadUserInfo = async () => {
     try {
       const user = await api.users.getCurrent();
+      console.log('获取到的用户信息:', user);
       setUserInfo(user);
     } catch (error) {
       console.error("获取用户信息失败:", error);
@@ -65,10 +66,10 @@ export default function Users() {
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  姓名
+                  联系人
                 </Typography>
                 <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}>
-                  {userInfo.name}
+                  {userInfo.contactPerson}
                 </Typography>
               </CardContent>
             </Card>

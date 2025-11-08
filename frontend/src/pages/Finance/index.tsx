@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+  import React, { useEffect, useState } from "react";
 import { 
   Box, 
   Typography, 
@@ -45,6 +45,7 @@ export default function Finance() {
 
   const loadData = async () => {
     const res = await api.finance.transactions();
+    console.log('获取到的交易:', res);
     setTxs(res);
   };
 
@@ -147,9 +148,9 @@ export default function Finance() {
           </TableHead>
           <TableBody>
             {filteredTxs.map((t) => (
-              <TableRow key={t.txId}>
+              <TableRow key={t.id}>
                 <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                  {t.txId}
+                  {t.id}
                 </TableCell>
                 <TableCell>
                   <Typography variant="body1" fontWeight="bold">
@@ -171,7 +172,7 @@ export default function Finance() {
                   <Button 
                     size="small" 
                     onClick={() => alert(`查看详情: ${t.txId}`)}
-                  >
+                  > 
                     详情
                   </Button>
                 </TableCell>

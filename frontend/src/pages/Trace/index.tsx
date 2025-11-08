@@ -56,6 +56,7 @@ export default function Trace() {
     setError(null);
 
     try {
+      console.log('发起GET请求到:/trace/search, 查询参数:', query);
       const result = await api.trace.search(query);
       setTraceData(result);
     } catch (err: any) {

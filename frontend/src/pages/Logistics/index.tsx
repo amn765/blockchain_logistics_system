@@ -54,6 +54,7 @@ export default function Logistics() {
 
   const loadData = async () => {
     const res = await api.logistics.list();
+    // console.log(res)
     setList(res);
   };
 

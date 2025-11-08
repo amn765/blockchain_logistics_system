@@ -30,11 +30,14 @@ router.get('/', auth, async (req, res) => {
       query.to = to;
     }
     
+    // console.log('查询条件:', query);
     // 从 MongoDB 读取交易列表
     const transactions = await Transaction.find(query)
       .sort({ timestamp: -1 }) // 按时间戳降序排列
       .exec();
     
+    // console.log('In transaction.js查询到的交易:', transactions);
+
     // 返回交易列表
     res.json(transactions);
   } catch (error) {
