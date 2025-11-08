@@ -20,8 +20,8 @@ const eventTypes = [
   { value: 'received', label: '收货入库' },
   { value: 'shipped', label: '发货出库' },
   { value: 'in_transit', label: '运输中' },
-  { value: 'arrived', label: '到达中转' },
-  { value: 'delivered', label: '已送达' },
+  { value: 'semi_arrived', label: '到达中转' },
+  { value: 'arrived', label: '已送达' },
   { value: 'exception', label: '异常情况' }
 ];
 

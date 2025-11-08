@@ -84,7 +84,7 @@ export default function Dashboard() {
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6">在途商品</Typography>
-            <Typography variant="h4">{data?.totalShipments ?? "-"}</Typography>
+            <Typography variant="h4">{data?.transit ?? "-"}</Typography>
           </Paper>
         </Grid>
 
@@ -97,8 +97,8 @@ export default function Dashboard() {
 
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="h6">待结算</Typography>
-            <Typography variant="h4">{data?.pendingPayments ?? "-"}</Typography>
+            <Typography variant="h6">已送达</Typography>
+            <Typography variant="h4">{data?.delivered ?? "-"}</Typography>
           </Paper>
         </Grid>
 

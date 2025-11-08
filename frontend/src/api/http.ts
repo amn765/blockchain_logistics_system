@@ -94,9 +94,9 @@ export const api = {
         const data = response.data.data;
 
         return {
-          totalShipments: data.products?.total || 0,
-          activeOrders: data.products?.recent || 0,
-          pendingPayments: data.transactions?.recent || 0,
+          transit: data.products?.transiting || 0,
+          activeOrders: data.products?.activeduct || 0,
+          delivered: data.products?.delivered || 0,
           onChainTxCount: data.transactions?.total || 0,          
         }
       } catch (error: any) {
@@ -254,37 +254,63 @@ export const api = {
   },
   
   finance: {
+    // 获取交易列表
     transactions: async () => {
       try {
-        // console.log('发起GET请求到:/transactions');
-        const response = await apiClient.get('/transactions');
-        // console.log('原始响应:', response);
-        // console.log('http.ts获取到的交易:', response.data);
-        // 映射后端返回的数据结构到前端期望的结构
-        return response.data.map((transaction: any) => ({
-          id: transaction.id,
-          txId: transaction.txId,
-          fromCompanyId: transaction.from,
-          toCompanyId: transaction.to,
-          payer: transaction.from,
-          payee: transaction.to,
-          amount: transaction.amount,
-          currency: transaction.currency,
-          status: transaction.status,
-          reference: transaction.reference,
-          ledgerTxId: transaction.ledgerTxId,
-          date: transaction.timestamp ? transaction.timestamp.split('T')[0] : '',
-          createdAt: transaction.timestamp
+        const response = await apiClient.get('/finance/transactions');
+        return response.data.map((tx: any) => ({
+          id: tx.id,
+          txId: tx.txId || '',
+          ledgerTxId: tx.ledgerTxId || '',
+          fromCompanyId: tx.from,
+          toCompanyId: tx.to,
+          payer: tx.from,
+          payee: tx.to,
+          amount: tx.amount,
+          currency: tx.currency,
+          status: tx.status,
+          reference: tx.reference,
+          date: tx.timestamp ? tx.timestamp.split('T')[0] : '',
+          createdAt: tx.timestamp,
+          notes: tx.notes || ''
         }));
       } catch (error: any) {
         if (axios.isAxiosError(error) && error.response) {
-          throw new Error(error.response.data.error || '获取交易列表失败');
+          throw new Error(error.response.data.message || '获取交易列表失败');
         }
         throw new Error('网络连接错误');
       }
     },
-    
-    // 新增：发起支付
+
+    // 确认收款
+    confirmTransaction: async (id: string) => {
+      try {
+        const response = await apiClient.post(`/finance/transactions/${id}/confirm`);
+        const tx = response.data.transaction; // 注意：后端返回 { message, transaction }
+        return {
+          id: tx.id,
+          txId: tx.txId || '',
+          ledgerTxId: tx.ledgerTxId || '',
+          fromCompanyId: tx.from,
+          toCompanyId: tx.to,
+          payer: tx.from,
+          payee: tx.to,
+          amount: tx.amount,
+          currency: tx.currency,
+          status: tx.status,
+          reference: tx.reference,
+          date: tx.timestamp ? tx.timestamp.split('T')[0] : '',
+          notes: tx.notes || ''
+        };
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.message || '确认交易失败');
+        }
+        throw new Error('网络连接错误');
+      }
+    },
+
+    // 创建交易
     createTransaction: async (transactionData: {
       toCompanyId: string;
       amount: number;
@@ -315,42 +341,36 @@ export const api = {
       }
     },
 
-    // 新增：获取交易详情
+    // 获取单笔交易详情
     getTransactionDetail: async (id: string) => {
       try {
-        // 获取交易列表并查找指定交易
-        const response = await apiClient.get('/transactions');
-        const transactions = response.data;
-        const transaction = transactions.find((t: any) => t.id === id);
-        
-        if (!transaction) {
-          throw new Error('交易未找到');
-        }
-        
+        const response = await apiClient.get('/finance/transactions');
+        const tx = response.data.find((t: any) => t.id === id);
+        if (!tx) throw new Error('交易未找到');
         return {
-          id: transaction.id,
-          txId: transaction.txId,
-          fromCompanyId: transaction.from,
-          toCompanyId: transaction.to,
-          payer: transaction.from,
-          payee: transaction.to,
-          amount: transaction.amount,
-          currency: transaction.currency,
-          status: transaction.status,
-          reference: transaction.reference,
-          ledgerTxId: transaction.ledgerTxId,
-          date: transaction.timestamp,
-          notes: transaction.notes,
+          id: tx.id,
+          txId: tx.txId || '',
+          ledgerTxId: tx.ledgerTxId || '',
+          fromCompanyId: tx.from,
+          toCompanyId: tx.to,
+          payer: tx.from,
+          payee: tx.to,
+          amount: tx.amount,
+          currency: tx.currency,
+          status: tx.status,
+          reference: tx.reference,
+          date: tx.timestamp ? tx.timestamp.split('T')[0] : '',
+          notes: tx.notes || '',
           progress: [
-            { step: "发起", status: "completed", time: transaction.timestamp },
-            { step: "验证", status: "completed", time: transaction.timestamp },
-            { step: "上链", status: transaction.status === "CONFIRMED" ? "completed" : "pending", time: transaction.timestamp },
-            { step: "确认", status: transaction.status === "CONFIRMED" ? "completed" : "pending", time: null }
+            { step: "发起", status: "completed", time: tx.timestamp },
+            { step: "验证", status: "completed", time: tx.timestamp },
+            { step: "上链", status: tx.status === "CONFIRMED" ? "completed" : "pending", time: tx.timestamp },
+            { step: "确认", status: tx.status === "CONFIRMED" ? "completed" : "pending", time: null }
           ]
         };
       } catch (error: any) {
         if (axios.isAxiosError(error) && error.response) {
-          throw new Error(error.response.data.error || '获取交易详情失败');
+          throw new Error(error.response.data.message || '获取交易详情失败');
         }
         throw new Error('网络连接错误');
       }

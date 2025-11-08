@@ -102,20 +102,26 @@ export default function Logistics() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'success';
+      case 'arrived': return 'success';
+      case 'semi_arrived': return 'primary';
       case 'in_transit': return 'primary';
       case 'pending': return 'warning';
       case 'exception': return 'error';
+      case 'received': return 'info';
+      case 'shipped': return 'info'; 
       default: return 'default';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'delivered': return '已送达';
+      case 'arrived': return '已送达';
+      case 'semi_arrived': return '到达中转';
       case 'in_transit': return '运输中';
       case 'pending': return '待处理';
       case 'exception': return '异常';
+      case 'received': return '物流入库';
+      case 'shipped': return '物流出库'; 
       default: return status;
     }
   };

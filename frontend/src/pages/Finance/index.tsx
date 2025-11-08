@@ -91,6 +91,19 @@ export default function Finance() {
     }).format(amount);
   };
 
+  const handleConfirmPayment = async (txId: string) => {
+    if (!window.confirm(`确认已收到交易 ${txId} 的资金吗？`)) return;
+    try {
+      const res = await api.finance.confirmTransaction(txId); // 调后端接口
+      console.log('确认收款成功:', res);
+      alert('确认成功 ✅');
+      loadData(); // 刷新数据
+    } catch (err) {
+      console.error('确认收款失败:', err);
+      alert('确认失败 ❌');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -169,12 +182,19 @@ export default function Finance() {
                 <TableCell>{t.reference}</TableCell>
                 <TableCell>{t.date}</TableCell>
                 <TableCell>
-                  <Button 
-                    size="small" 
-                    onClick={() => alert(`查看详情: ${t.txId}`)}
-                  > 
-                    详情
+                  {/* ✅ 新增确认按钮 */}
+                  <Button
+                    size="small"
+                    onClick={() => handleConfirmPayment(t.id)}
+                  >
+                    确认收款
                   </Button>
+                  {t.status === 'CONFIRMED' && (
+                    <Button size="small" disabled>已确认</Button>
+                  )}
+                  {t.status === 'FAILED' && (
+                    <Button size="small" disabled color="error">失败</Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
