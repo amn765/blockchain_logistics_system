@@ -221,13 +221,6 @@ export default function Logistics() {
                 <TableCell>
                   <Button 
                     size="small" 
-                    onClick={() => alert("查看溯源（占位）")}
-                    sx={{ mr: 1 }}
-                  >
-                    溯源
-                  </Button>
-                  <Button 
-                    size="small" 
                     variant="outlined"
                     onClick={() => handleAddEvent(r)}
                   >

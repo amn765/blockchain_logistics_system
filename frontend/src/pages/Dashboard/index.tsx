@@ -35,15 +35,42 @@ export default function Dashboard() {
     (async () => {
       // 获取用户公司信息
       const userInfo = await api.users.getCurrent();
-      setUserCompany(userInfo.company || '');
+      const company = (userInfo.companyName || userInfo.company || userInfo.organization || '').trim();
+      setUserCompany(company); // 仍然更新 state 以备 UI 使用
+      
+      console.log("🏢 当前用户公司：", userCompany);
 
       // 并行获取仪表盘数据和交易记录
       const [summaryRes, transactionsRes] = await Promise.all([
         api.dashboard.summary(),
         api.dashboard.recentTransactions()
       ]);
+
+      // 过滤：只保留与当前公司有关的交易
+      const filtered = transactionsRes.filter((tx: any) => {
+        // 抽取可能的字段（确保全是字符串）
+        const fromCandidates = [
+          tx.from, tx.fromCompany, tx.fromCompanyId, tx.payer, tx.fromCompanyName
+        ].filter(Boolean).map((s: any) => String(s).trim());
+
+        const toCandidates = [
+          tx.to, tx.toCompany, tx.toCompanyId, tx.payee, tx.toCompanyName
+        ].filter(Boolean).map((s: any) => String(s).trim());
+
+        const companyLower = String(company).trim();
+
+        // ✅ 模糊匹配：任意字段中只要包含公司字符串即可
+        const matched =
+          fromCandidates.some(f => companyLower.includes(f)) ||
+          toCandidates.some(t => companyLower.includes(t));
+
+        return matched;
+      });
+
+
       setData(summaryRes);
-      setTransactions(transactionsRes);
+      setTransactions(filtered);
+
     })();
   }, []);
 
@@ -69,7 +96,7 @@ export default function Dashboard() {
 
   // 格式化金额显示
   const formatAmount = (amount: number, type: string) => {
-    const sign = type === 'income' ? '+' : '-';
+    const sign = userCompany.includes(type) ? '+' : '-';
     return `${sign}¥${amount.toLocaleString()}`;
   };
 
@@ -140,14 +167,14 @@ export default function Dashboard() {
                   <TableCell>{transaction.description}</TableCell>
                   <TableCell 
                     sx={{ 
-                      color: transaction.type === 'income' ? 'success.main' : 'error.main',
+                      color: userCompany.includes(transaction.to) ? 'error.main' : 'success.main',
                       fontWeight: 'bold'
                     }}
                   >
-                    {formatAmount(transaction.amount, transaction.type)}
+                    {formatAmount(transaction.amount, transaction.to)}
                   </TableCell>
                   <TableCell>
-                    {transaction.type === 'income' ? transaction.from : userCompany}
+                    {userCompany.includes(transaction.to) ? transaction.from : userCompany}
                   </TableCell>
                   <TableCell>
                     <Chip 

@@ -49,7 +49,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.message || '登录失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('登录失败');
       }
     },
 
@@ -82,7 +82,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.message || '注册失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('注册失败');
       }
     },
   },
@@ -135,7 +135,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '获取交易记录失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('获取交易记录失败');
       }
     },
   },
@@ -159,7 +159,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '获取物流列表失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('获取物流列表失败');
       }
     },
     detail: async (id: string) => {
@@ -185,7 +185,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '获取物流详情失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('产品信息不存在');
       }
     },
   },
@@ -214,7 +214,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '创建产品失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('创建产品失败');
       }
     },
 
@@ -235,7 +235,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '文件上传失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('文件上传失败');
       }
     },
     
@@ -248,7 +248,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '获取产品列表失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('获取产品列表失败');
       }
     }
   },
@@ -278,7 +278,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.message || '获取交易列表失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('获取交易列表失败');
       }
     },
 
@@ -306,7 +306,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.message || '确认交易失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('确认交易失败');
       }
     },
 
@@ -337,7 +337,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '创建交易失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('创建交易失败');
       }
     },
 
@@ -372,7 +372,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.message || '获取交易详情失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('获取交易详情失败');
       }
     }
   },
@@ -397,7 +397,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '添加物流事件失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('添加物流事件失败');
       }
     },
 
@@ -426,7 +426,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '获取物流事件历史失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('获取物流事件历史失败');
       }
     }
   },
@@ -478,7 +478,7 @@ export const api = {
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.error || '溯源查询失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('溯源查询失败');
       }
     }
   },
