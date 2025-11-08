@@ -26,6 +26,14 @@ router.get('/summary', auth, async (req, res) => {
       }
     ]);
     
+    const activeProductCount = await Product.countDocuments({
+      status: { $nin: ["arrived", "exception"] }
+    });
+
+    const deliveredProductCount = await Product.countDocuments({
+      status: { $in: [ 'arrived'] }
+    });
+
     // 获取最近7天的产品创建数量
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -44,6 +52,14 @@ router.get('/summary', auth, async (req, res) => {
       timestamp: { $gte: sevenDaysAgo }
     });
     
+    const inTransitCount = await Product.countDocuments({
+      status: { $in: [ 'in_transit'] }
+    });
+
+    const activeOrders = await Product.countDocuments({
+      status: { $in: ['received', 'shipped', 'in_transit','semi_arrived'] }
+    });
+
     // 获取交易状态分布
     const transactionStatusDistribution = await Transaction.aggregate([
       {
@@ -58,7 +74,11 @@ router.get('/summary', auth, async (req, res) => {
     const summary = {
       products: {
         total: productCount,
+        active: activeProductCount,    
+        delivered: deliveredProductCount, 
         recent: recentProducts,
+        transiting: inTransitCount,
+        activeduct: activeOrders,
         statusDistribution: productStatusDistribution.reduce((acc, item) => {
           acc[item._id] = item.count;
           return acc;
@@ -80,7 +100,7 @@ router.get('/summary', auth, async (req, res) => {
         total: userCount
       }
     };
-    
+    // console.log('📦 Dashboard Summary Data:', summary);
     res.json({
       success: true,
       data: summary
