@@ -26,18 +26,26 @@ const eventTypeMap: { [key: string]: string } = {
 
 // 状态颜色映射
 const statusColorMap: { [key: string]: any } = {
-  delivered: 'success',
-  in_transit: 'primary', 
+  arrived: 'success',
+  semi_arrived: 'primary',
+  in_transit: 'primary',
   pending: 'warning',
-  exception: 'error'
+  exception: 'error',
+  received: 'info',
+  shipped: 'info',
+  delivered: 'success'
 };
 
 // 状态文本映射  
 const statusTextMap: { [key: string]: string } = {
+  arrived: '已送达',
   delivered: '已送达',
+  semi_arrived: '到达中转',
   in_transit: '运输中',
   pending: '待处理',
-  exception: '异常'
+  exception: '异常',
+  received: '物流入库',
+  shipped: '物流出库' 
 };
 
 export default function Trace() {
@@ -199,7 +207,7 @@ export default function Trace() {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Chip 
                     label={item.type === 'logistics' ? '物流' : '资金'} 
-                    color={item.type === 'logistics' ? 'primary' : 'secondary'}
+                    color={item.type === 'logistics' ? 'primary' : 'warning'}
                     size="small"
                     sx={{ mr: 2 }}
                   />
@@ -211,14 +219,17 @@ export default function Trace() {
                 {item.type === 'logistics' ? (
                   <Card variant="outlined">
                     <CardContent>
-                      <Typography variant="subtitle1" gutterBottom>
-                        {eventTypeMap[item.type] || item.type}
+                      <Typography variant="body2">
+                        <strong>物流信息</strong>
                       </Typography>
                       <Typography variant="body2">
                         <strong>位置：</strong>{item.location}
                       </Typography>
                       <Typography variant="body2">
                         <strong>经办方：</strong>{item.actor}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>时间：</strong>{item.timestamp}
                       </Typography>
                       {item.notes && (
                         <Typography variant="body2">

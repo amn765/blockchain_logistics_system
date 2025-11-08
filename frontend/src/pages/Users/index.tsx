@@ -143,11 +143,6 @@ export default function Users() {
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 3, p: { xs: 2, sm: 3 }, bgcolor: 'grey.50', borderRadius: 2 }}>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-            💡 当前为演示版本，所有用户均具有完整操作权限，可以执行新增批次、物流追踪、资金流转等所有功能。
-          </Typography>
-        </Box>
       </Paper>
     </Box>
   );

@@ -36,7 +36,7 @@ export default function Layout({ children }: LayoutProps) {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               供应链追踪平台（联盟链）
             </Typography>
-            <Typography variant="body2">Demo 企业</Typography>
+            <Typography variant="body2">企业用户</Typography>
           </Toolbar>
         </AppBar>
 
