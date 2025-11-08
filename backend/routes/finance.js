@@ -38,6 +38,32 @@ router.post('/transactions/:id/confirm', auth, async (req, res) => {
       return res.status(400).json({ message: '失败交易无法确认' });
     }
 
+    // 1. 查找付款方 (User)
+    const payer = await User.findOne({ companyName: tx.from });
+
+    if (!payer) {
+      console.error(`❌ 确认失败：找不到付款方 "${tx.from}"`);
+      // 也许应该将交易设为 FAILED
+      return res.status(400).json({ message: '付款方账户不存在' });
+    }
+
+    // 2. 检查余额
+    if (payer.balance < tx.amount) {
+      console.warn(`❌ 确认失败：付款方 "${payer.companyName}" 余额不足 (需要 ${tx.amount}, 只有 ${payer.balance})`);
+      
+      // 将交易状态设为 FAILED
+      tx.status = 'FAILED';
+      tx.updatedAt = new Date();
+      await tx.save();
+
+      return res.status(400).json({ message: '付款方余额不足，交易失败' });
+    }
+
+    // 3. 扣除余额并保存付款方
+    payer.balance -= tx.amount;
+    await payer.save();
+    console.log(`✅ 已从 "${payer.companyName}" 扣除 ${tx.amount}。新余额: ${payer.balance}`);
+
     // 更新状态
     tx.status = 'CONFIRMED';
     tx.updatedAt = new Date();

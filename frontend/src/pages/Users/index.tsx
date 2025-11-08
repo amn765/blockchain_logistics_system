@@ -18,6 +18,7 @@ interface UserInfo {
   role: string;
   createdAt: string;
   companyType: string;
+  balance: number;
 }
 
 export default function Users() {
@@ -35,6 +36,13 @@ export default function Users() {
     } catch (error) {
       console.error("获取用户信息失败:", error);
     }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('zh-CN', {
+      style: 'currency',
+      currency: 'CNY'
+    }).format(amount);
   };
 
   if (!userInfo) {
@@ -96,6 +104,19 @@ export default function Users() {
                 </Typography>
                 <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}>
                   {userInfo.companyName}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} lg={4}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  账户余额
+                </Typography>
+                <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' }, color: 'primary.main' }}>
+                  {formatCurrency(userInfo.balance)}
                 </Typography>
               </CardContent>
             </Card>

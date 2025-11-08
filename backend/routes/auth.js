@@ -45,7 +45,8 @@ router.post('/register', async (req, res) => {
         contactPerson: user.contactPerson,
         email: user.email,
         licenseNumber: user.licenseNumber,
-        companyType: user.companyType
+        companyType: user.companyType,
+        balance: user.balance
       }
     });
   } catch (error) {
@@ -87,7 +88,8 @@ router.post('/login', async (req, res) => {
         contactPerson: user.contactPerson,
         email: user.email,
         licenseNumber: user.licenseNumber,
-        companyType: user.companyType
+        companyType: user.companyType,
+        balance: user.balance
       }
     });
   } catch (error) {

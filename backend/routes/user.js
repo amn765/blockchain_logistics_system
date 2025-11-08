@@ -21,7 +21,8 @@ router.get('/current', auth, async (req, res) => {
         licenseNumber: user.licenseNumber,
         companyType: user.companyType,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        balance: user.balance
       }
     });
   } catch (error) {
