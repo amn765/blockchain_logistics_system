@@ -29,9 +29,14 @@ interface Transaction {
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [userCompany, setUserCompany] = useState<string>('');
 
   useEffect(() => {
     (async () => {
+      // 获取用户公司信息
+      const userInfo = await api.users.getCurrent();
+      setUserCompany(userInfo.company || '');
+
       // 并行获取仪表盘数据和交易记录
       const [summaryRes, transactionsRes] = await Promise.all([
         api.dashboard.summary(),
@@ -142,7 +147,7 @@ export default function Dashboard() {
                     {formatAmount(transaction.amount, transaction.type)}
                   </TableCell>
                   <TableCell>
-                    {transaction.type === 'income' ? `来自: ${transaction.from}` : `支付给: ${transaction.to}`}
+                    {transaction.type === 'income' ? transaction.from : userCompany}
                   </TableCell>
                   <TableCell>
                     <Chip 

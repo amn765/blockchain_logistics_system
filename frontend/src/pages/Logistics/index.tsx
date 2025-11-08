@@ -109,6 +109,7 @@ export default function Logistics() {
       case 'exception': return 'error';
       case 'received': return 'info';
       case 'shipped': return 'info'; 
+      case 'delivered': return 'success';
       default: return 'default';
     }
   };
@@ -116,6 +117,7 @@ export default function Logistics() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'arrived': return '已送达';
+      case 'delivered': return '已送达';
       case 'semi_arrived': return '到达中转';
       case 'in_transit': return '运输中';
       case 'pending': return '待处理';
