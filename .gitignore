@@ -40,5 +40,6 @@ docker-compose-extend.yml
 docker-compose.yml
 
 blockchain_new/
+contracts/vendor/
 
 
