@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Transaction = require('../models/Transaction');
 const auth = require('../middleware/auth'); // 如果你有登录验证中间件
+const User = require('../models/User');
 
 /**
  * 获取所有交易记录
@@ -22,14 +23,17 @@ router.get('/transactions', auth, async (req, res) => {
  * POST /api/finance/transactions/:id/confirm
  */
 router.post('/transactions/:id/confirm', auth, async (req, res) => {
-  const { id } = req.params;
+  const currentTransaction = req.params;
+  // console.log('参数为' + req.params)
   try {
     // 根据链码id字段查找（不是MongoDB的_id）
-    const tx = await Transaction.findOne({ id });
+    // console.log(currentTransaction.id)
+    const tx = await Transaction.findOne({ id: currentTransaction.id });
+    console.log(tx)
     if (!tx) {
       return res.status(404).json({ message: '交易不存在' });
     }
-
+    
     // 状态检查
     if (tx.status === 'CONFIRMED') {
       return res.status(400).json({ message: '交易已确认，无需重复操作' });
@@ -37,10 +41,13 @@ router.post('/transactions/:id/confirm', auth, async (req, res) => {
     if (tx.status === 'FAILED') {
       return res.status(400).json({ message: '失败交易无法确认' });
     }
-
+    
+    console.log('付款方为' + tx.from)
+    console.log('收款方为' + tx.to)
     // 1. 查找付款方 (User)
     const payer = await User.findOne({ companyName: tx.from });
 
+    console.log('付款方'+payer)
     if (!payer) {
       console.error(`❌ 确认失败：找不到付款方 "${tx.from}"`);
       // 也许应该将交易设为 FAILED

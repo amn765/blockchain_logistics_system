@@ -94,6 +94,7 @@ export default function Finance() {
   const handleConfirmPayment = async (txId: string) => {
     if (!window.confirm(`确认已收到交易 ${txId} 的资金吗？`)) return;
     try {
+      console.log(txId)
       const res = await api.finance.confirmTransaction(txId); // 调后端接口
       console.log('确认收款成功:', res);
       alert('确认成功 ✅');

@@ -34,4 +34,30 @@ router.get('/current', auth, async (req, res) => {
   }
 });
 
+// 获取所有用户列表（仅管理员可用）
+// GET /api/users
+router.get('/', auth, async (req, res) => {
+  try {
+    // 检查是否为管理员（这里可以根据需要添加权限检查）
+    // const currentUser = req.user;
+    // if (currentUser.role !== 'admin') {
+    //   return res.status(403).json({ success: false, message: '权限不足' });
+    // }
+
+    // 获取所有用户列表（不包含密码）
+    const users = await User.find({}, '-password');
+    
+    res.json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: '服务器内部错误' 
+    });
+  }
+});
+
 module.exports = router;

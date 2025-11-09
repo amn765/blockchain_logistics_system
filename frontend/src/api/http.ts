@@ -516,10 +516,24 @@ export const api = {
           companyType: "生产厂商"
         };
       }
+    },
+    
+    // 获取所有用户列表
+    getAll: async () => {
+      try {
+        const response = await apiClient.get('/users');
+        return response.data.data;
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.message || '获取用户列表失败');
+        }
+        throw new Error('获取用户列表失败');
+      }
     }
   },
   
 };
+
 /*
 // src/api/http.ts
 // 当前使用 mock 返回，后端 ready 后把实现改为 axios 实际调用

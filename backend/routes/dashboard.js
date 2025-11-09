@@ -124,7 +124,7 @@ router.get('/transactions', auth, async (req, res) => {
       .limit(15) // 限制为15条记录
       .lean(); // 使用lean()提高性能
     
-    console.log('📦 Dashboard Data:', recentTransactions);
+    // console.log('📦 Dashboard Data:', recentTransactions);
     res.json({
       success: true,
       data: recentTransactions
