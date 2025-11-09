@@ -54,17 +54,16 @@ services:
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./organizations/peerOrganizations/manufacturer.supplychain.com/users/Admin@manufacturer.supplychain.com/msp:/etc/hyperledger/fabric/admin-msp
       - ./organizations/peerOrganizations/manufacturer.supplychain.com/peers/peer0.manufacturer.supplychain.com/msp:/etc/hyperledger/fabric/msp
       - ./organizations/peerOrganizations/manufacturer.supplychain.com/peers/peer0.manufacturer.supplychain.com/tls:/etc/hyperledger/fabric/tls
+      - ./organizations/ordererOrganizations/supplychain.com/orderers/orderer.supplychain.com/tls/ca.crt:/etc/hyperledger/fabric/tls/orderer-ca.crt
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
       - "${MANUFACTURER_PEER_PORT:-7051}:${MANUFACTURER_PEER_PORT:-7051}"
     extra_hosts:
-      - "peer0.manufacturer.supplychain.com:127.0.0.1"
-      - "peer0.logistics.supplychain.com:127.0.0.1"
-      - "peer0.retailer.supplychain.com:127.0.0.1"
-      - "orderer.supplychain.com:127.0.0.1"
+      - "orderer.supplychain.com:172.18.0.2"
     networks:
       - supplychain
 
@@ -87,17 +86,16 @@ services:
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./organizations/peerOrganizations/logistics.supplychain.com/users/Admin@logistics.supplychain.com/msp:/etc/hyperledger/fabric/admin-msp
       - ./organizations/peerOrganizations/logistics.supplychain.com/peers/peer0.logistics.supplychain.com/msp:/etc/hyperledger/fabric/msp
       - ./organizations/peerOrganizations/logistics.supplychain.com/peers/peer0.logistics.supplychain.com/tls:/etc/hyperledger/fabric/tls
+      - ./organizations/ordererOrganizations/supplychain.com/orderers/orderer.supplychain.com/tls/ca.crt:/etc/hyperledger/fabric/tls/orderer-ca.crt
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
       - "${LOGISTICS_PEER_PORT:-9051}:${LOGISTICS_PEER_PORT:-9051}"
     extra_hosts:
-      - "peer0.manufacturer.supplychain.com:127.0.0.1"
-      - "peer0.logistics.supplychain.com:127.0.0.1"
-      - "peer0.retailer.supplychain.com:127.0.0.1"
-      - "orderer.supplychain.com:127.0.0.1"
+      - "orderer.supplychain.com:172.18.0.2"
     networks:
       - supplychain
 
@@ -120,16 +118,15 @@ services:
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./organizations/peerOrganizations/retailer.supplychain.com/users/Admin@retailer.supplychain.com/msp:/etc/hyperledger/fabric/admin-msp
       - ./organizations/peerOrganizations/retailer.supplychain.com/peers/peer0.retailer.supplychain.com/msp:/etc/hyperledger/fabric/msp
       - ./organizations/peerOrganizations/retailer.supplychain.com/peers/peer0.retailer.supplychain.com/tls:/etc/hyperledger/fabric/tls
+      - ./organizations/ordererOrganizations/supplychain.com/orderers/orderer.supplychain.com/tls/ca.crt:/etc/hyperledger/fabric/tls/orderer-ca.crt
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
       - "${RETAILER_PEER_PORT:-11051}:${RETAILER_PEER_PORT:-11051}"
     extra_hosts:
-      - "peer0.manufacturer.supplychain.com:127.0.0.1"
-      - "peer0.logistics.supplychain.com:127.0.0.1"
-      - "peer0.retailer.supplychain.com:127.0.0.1"
-      - "orderer.supplychain.com:127.0.0.1"
+      - "orderer.supplychain.com:172.18.0.2"
     networks:
       - supplychain

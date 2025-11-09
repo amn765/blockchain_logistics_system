@@ -18,6 +18,9 @@ Organizations:
         Name: OrdererMSP
         ID: OrdererMSP
         MSPDir: ../organizations/ordererOrganizations/supplychain.com/msp
+        # OrdererEndpoints defines the endpoints that can be reached by peer and client
+        OrdererEndpoints:
+            - orderer.supplychain.com:7050
         Policies:
             Readers:
                 Type: Signature
@@ -210,6 +213,12 @@ Profiles:
     SupplyChainChannel:
         Consortium: SupplyChainConsortium
         <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg
+            Capabilities:
+                <<: *OrdererCapabilities
         Application:
             <<: *ApplicationDefaults
             Organizations:

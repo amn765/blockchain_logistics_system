@@ -158,7 +158,7 @@ createChannel() {
         
         # Check if block was created successfully (even if there were TLS warnings)
         if [ -f "${ROOTDIR}/channel-artifacts/${CHANNEL_NAME}.block" ]; then
-            printSuccess "Channel ${CHANNEL_NAME} created successfully"
+    printSuccess "Channel ${CHANNEL_NAME} created successfully"
             return 0
         fi
         
@@ -181,9 +181,9 @@ createChannel() {
 joinChannel() {
     ORG=$1
     setGlobalsForPeer $ORG
-
+    
     printInfo "Joining ${ORG} to channel ${CHANNEL_NAME}..."
-
+    
     # Check if peer is already joined to the channel
     if peer channel list | grep -q "${CHANNEL_NAME}"; then
         printInfo "${ORG} peer is already joined to channel ${CHANNEL_NAME}, skipping join"
@@ -212,12 +212,12 @@ joinChannel() {
     fi
 
     peer channel join -b $BLOCK_FILE
-
+    
     if [ $? -ne 0 ]; then
         printError "Failed to join ${ORG} to channel"
         exit 1
     fi
-
+    
     printSuccess "${ORG} joined channel successfully"
 }
 
@@ -225,9 +225,9 @@ joinChannel() {
 updateAnchorPeers() {
     ORG=$1
     setGlobalsForPeer $ORG
-
+    
     printInfo "Updating anchor peers for ${ORG}..."
-
+    
     # Use localhost for orderer address (from host)
     # TLS certificate includes localhost, so TLS should work
     ORDERER_HOST="localhost:${ORDERER_PORT}"
@@ -256,7 +256,7 @@ updateAnchorPeers() {
         --tls \
         --cafile ${ORDERER_CA} \
         --timeout 30s; then
-        printSuccess "Anchor peers updated for ${ORG}"
+    printSuccess "Anchor peers updated for ${ORG}"
     else
         printWarning "Failed to update anchor peers for ${ORG} (may already be updated)"
         # Don't exit with error for anchor peer updates, as they might already be set

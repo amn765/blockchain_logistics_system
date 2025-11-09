@@ -32,5 +32,13 @@ blockchain/system-genesis-block/
 blockchain/channel-artifacts/
 blockchain/docker-compose-extend.yml
 
+fabric-samples/
+organizations/
+system-genesis-block/
+channel-artifacts/
+docker-compose-extend.yml
+docker-compose.yml
+
+blockchain_new/
 
 

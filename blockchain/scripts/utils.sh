@@ -24,7 +24,7 @@ export FABRIC_CFG_PATH=${ROOTDIR}/config
 # Set PATH to include necessary binaries
 # Check multiple possible locations for bin directory
 if [ -d "${ROOTDIR}/../bin" ]; then
-    export PATH=${ROOTDIR}/../bin:$PATH
+export PATH=${ROOTDIR}/../bin:$PATH
 elif [ -d "${ROOTDIR}/../fabric-samples/bin" ]; then
     export PATH=${ROOTDIR}/../fabric-samples/bin:$PATH
 fi
