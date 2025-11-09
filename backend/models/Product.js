@@ -44,7 +44,7 @@ const productSchema = new mongoose.Schema({
   status: {
     type: String,
     // 匹配 AddLogisticsEventForm.tsx 和 Logistics/index.tsx
-    enum: ['pending', 'received', 'shipped', 'in_transit', 'arrived', 'delivered', 'exception'],
+    enum: ['pending', 'received', 'shipped', 'in_transit', 'arrived', 'exception','semi_arrived'],
     default: 'pending'
   },
   // 当前位置 (用于物流筛选)

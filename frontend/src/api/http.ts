@@ -3,45 +3,53 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:3001/api";
 
+// 创建一个axios实例，用于添加认证token
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+});
 
+// 添加请求拦截器，自动添加认证token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // src/api/http.ts
 // 当前使用 mock 返回，后端 ready 后把实现改为 axios 实际调用
 export const api = {
   auth: {
     login: async (email: string, password: string) => {
-      // mock 登录：若邮箱非空直接返回 token
-      // if (email && password) {
-      //   return { 
-      //     token: "mock-jwt-token", 
-      //     user: { 
-      //       id: "mock-user-id",
-      //       email: email, 
-      //       name: "Demo Company",
-      //       role: "manufacturer",
-      //       companyId: "mock-company-id"
-      //     } 
-      //   };
-      // }
-      // throw new Error("Invalid credentials");
       try {
-        // 4. 发起一个 POST 请求到你的后端 /api/auth/login 路由
+        // 发起一个 POST 请求到你的后端 /api/auth/login 路由
         const response = await axios.post(`${API_BASE_URL}/auth/login`, {
           email: email,
           password: password
         });
 
-        // 5. 返回后端传回的真实数据 (token 和 user)
+        // 保存token到localStorage
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+
+        // 返回后端传回的真实数据 (token 和 user)
         return response.data;
 
       } catch (error: any) {
-        // 6. 如果登录失败 (例如 401)，抛出错误
+        // 如果登录失败 (例如 401)，抛出错误
         // 登录组件 会捕获这个错误
         if (axios.isAxiosError(error) && error.response) {
           throw new Error(error.response.data.message || '登录失败');
-          // throw new Error(error.response.data.error || '登录失败');
         }
-        throw new Error('网络连接错误');
+        throw new Error('登录失败');
       }
     },
 
@@ -53,20 +61,6 @@ export const api = {
       licenseNumber: string;
       companyType: string;
     }) => {
-      // mock 注册：如果邮箱非空就返回成功
-      // if (userData.email && userData.password) {
-      //   return {
-      //     token: "mock-jwt-token-for-registration",
-      //     user: {
-      //       id: "mock-user-id",
-      //       email: userData.email,
-      //       name: userData.companyName,
-      //       role: "manufacturer",
-      //       companyId: "mock-company-id"
-      //     }
-      //   };
-      // }
-      // throw new Error("Registration failed");
       try {
         const response = await axios.post(`${API_BASE_URL}/auth/register`, {
           email: userData.email,
@@ -77,13 +71,513 @@ export const api = {
           companyType: userData.companyType,
         })
 
+        // 保存token到localStorage
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+
         return response.data;
       } catch (error: any) {
         if (axios.isAxiosError(error) && error.response) {
-          throw new Error(error.response.data.error || '注册失败');
+          throw new Error(error.response.data.message || '注册失败');
+        }
+        throw new Error('注册失败');
+      }
+    },
+  },
+
+  dashboard: {
+    summary: async () => {
+      try {
+        const response = await apiClient.get('/dashboard/summary');
+        const data = response.data.data;
+
+        return {
+          transit: data.products?.transiting || 0,
+          activeOrders: data.products?.activeduct || 0,
+          delivered: data.products?.delivered || 0,
+          onChainTxCount: data.transactions?.total || 0,          
+        }
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '获取仪表盘数据失败');
         }
         throw new Error('网络连接错误');
       }
+    },
+    
+    // 新增：获取最近交易记录
+    recentTransactions: async () => {
+      try {
+        const response = await apiClient.get('/dashboard/transactions');
+        const transactions = response.data.data;
+
+        return transactions.map((transaction: any) => ({
+          id: transaction.id,
+          amount: transaction.amount,
+          type: transaction.from === "本公司" ? "expense" : "income",
+          from: transaction.from,
+          to: transaction.to,
+          status: transaction.status === "CONFIRMED" ? "completed" : 
+                 transaction.status === "PENDING" ? "pending" : "failed",
+          date: new Date(transaction.timestamp).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          }).replace(/\//g, '-'),
+          description: transaction.notes || '交易记录'
+        }));
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '获取交易记录失败');
+        }
+        throw new Error('获取交易记录失败');
+      }
+    },
+  },
+
+  logistics: {
+    list: async () => {
+      try {
+        // 这里需要根据实际的API进行调整
+        // 由于后端没有直接提供获取物流列表的接口，我们可以通过获取产品列表来实现
+        const response = await apiClient.get('/products');
+        console.log(response)
+        return response.data.map((product: any) => ({
+          id: product.id,
+          name: product.name,
+          status: product.status,
+          lastLocation: product.currentLocation,
+          updatedAt: product.updatedAt,
+          currentActor: product.currentActor
+        }));
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '获取物流列表失败');
+        }
+        throw new Error('获取物流列表失败');
+      }
+    },
+    detail: async (id: string) => {
+      try {
+        // 获取产品的物流记录
+        const response = await apiClient.get(`/trace/search?query=${id}`);
+        
+        if (response.data.data && response.data.data.length > 0) {
+          const productData = response.data.data[0];
+          // 映射物流记录到前端期望的结构
+          return {
+            id: productData.product.id,
+            history: productData.logisticsRecords.map((record: any) => ({
+              node: record.location,
+              time: record.timestamp,
+              action: record.status
+            }))
+          };
+        }
+        
+        throw new Error('产品未找到');
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '获取物流详情失败');
+        }
+        throw new Error('产品信息不存在');
+      }
+    },
+  },
+  
+  products: {
+    // 创建商品批次
+    create: async (productData: {
+      sku: string;
+      batchNo: string;
+      quantity: number;
+      productionDate: string;
+      metadata?: {
+        origin?: string;
+        temperatureRecord?: string;
+        gcReportId?: string;
+      }
+    }) => {
+      try {
+        const response = await apiClient.post('/products', {
+          ...productData,
+          reference: productData.batchNo // 使用批次号作为reference
+        });
+        
+        return response.data;
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '创建产品失败');
+        }
+        throw new Error('创建产品失败');
+      }
+    },
+
+    // 文件上传（用于质检报告）
+    uploadFile: async (file: File) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await apiClient.post('/products/upload-file', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        return response.data;
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '文件上传失败');
+        }
+        throw new Error('文件上传失败');
+      }
+    },
+    
+    // 获取所有产品
+    getAll: async () => {
+      try {
+        const response = await apiClient.get('/products');
+        return response.data;
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '获取产品列表失败');
+        }
+        throw new Error('获取产品列表失败');
+      }
+    }
+  },
+  
+  finance: {
+    // 获取交易列表
+    transactions: async () => {
+      try {
+        const response = await apiClient.get('/finance/transactions');
+        return response.data.map((tx: any) => ({
+          id: tx.id,
+          txId: tx.txId || '',
+          ledgerTxId: tx.ledgerTxId || '',
+          fromCompanyId: tx.from,
+          toCompanyId: tx.to,
+          payer: tx.from,
+          payee: tx.to,
+          amount: tx.amount,
+          currency: tx.currency,
+          status: tx.status,
+          reference: tx.reference,
+          date: tx.timestamp ? tx.timestamp.split('T')[0] : '',
+          createdAt: tx.timestamp,
+          notes: tx.notes || ''
+        }));
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.message || '获取交易列表失败');
+        }
+        throw new Error('获取交易列表失败');
+      }
+    },
+
+    // 确认收款
+    confirmTransaction: async (id: string) => {
+      try {
+        const response = await apiClient.post(`/finance/transactions/${id}/confirm`);
+        const tx = response.data.transaction; // 注意：后端返回 { message, transaction }
+        return {
+          id: tx.id,
+          txId: tx.txId || '',
+          ledgerTxId: tx.ledgerTxId || '',
+          fromCompanyId: tx.from,
+          toCompanyId: tx.to,
+          payer: tx.from,
+          payee: tx.to,
+          amount: tx.amount,
+          currency: tx.currency,
+          status: tx.status,
+          reference: tx.reference,
+          date: tx.timestamp ? tx.timestamp.split('T')[0] : '',
+          notes: tx.notes || ''
+        };
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.message || '确认交易失败');
+        }
+        throw new Error('确认交易失败');
+      }
+    },
+
+    // 创建交易
+    createTransaction: async (transactionData: {
+      toCompanyId: string;
+      amount: number;
+      currency: string;
+      reference: string;
+      notes?: string;
+    }) => {
+      try {
+        const response = await apiClient.post('/transactions', transactionData);
+        const data = response.data;
+        
+        // 映射后端返回的数据结构到前端期望的结构
+        return {
+          transactionId: data.transactionId,
+          txId: data.txId,
+          ledgerTxId: data.ledgerTxId,
+          status: data.status,
+          ...transactionData,
+          payer: "当前公司",
+          payee: transactionData.toCompanyId,
+          date: new Date().toISOString().split('T')[0]
+        };
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '创建交易失败');
+        }
+        throw new Error('创建交易失败');
+      }
+    },
+
+    // 获取单笔交易详情
+    getTransactionDetail: async (id: string) => {
+      try {
+        const response = await apiClient.get('/finance/transactions');
+        const tx = response.data.find((t: any) => t.id === id);
+        if (!tx) throw new Error('交易未找到');
+        return {
+          id: tx.id,
+          txId: tx.txId || '',
+          ledgerTxId: tx.ledgerTxId || '',
+          fromCompanyId: tx.from,
+          toCompanyId: tx.to,
+          payer: tx.from,
+          payee: tx.to,
+          amount: tx.amount,
+          currency: tx.currency,
+          status: tx.status,
+          reference: tx.reference,
+          date: tx.timestamp ? tx.timestamp.split('T')[0] : '',
+          notes: tx.notes || '',
+          progress: [
+            { step: "发起", status: "completed", time: tx.timestamp },
+            { step: "验证", status: "completed", time: tx.timestamp },
+            { step: "上链", status: tx.status === "CONFIRMED" ? "completed" : "pending", time: tx.timestamp },
+            { step: "确认", status: tx.status === "CONFIRMED" ? "completed" : "pending", time: null }
+          ]
+        };
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.message || '获取交易详情失败');
+        }
+        throw new Error('获取交易详情失败');
+      }
+    }
+  },
+  
+  logisticsEvents: {
+    // 添加物流事件
+    addEvent: async (productId: string, eventData: {
+      type: string;
+      location: string;
+      actor: string;
+      timestamp: string;
+      notes?: string;
+    }) => {
+      try {
+        const response = await apiClient.post('/logistics', {
+          productId,
+          ...eventData
+        });
+        
+        return response.data;
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '添加物流事件失败');
+        }
+        throw new Error('添加物流事件失败');
+      }
+    },
+
+    // 获取物流事件历史
+    getEvents: async (productId: string) => {
+      try {
+        // 这里需要根据实际的API进行调整
+        // 目前后端没有提供专门获取物流事件历史的接口
+        // 我们可以通过溯源查询接口来获取相关信息
+        const response = await apiClient.get(`/trace/search?query=${productId}`);
+        
+        if (response.data.data && response.data.data.length > 0) {
+          const productData = response.data.data[0];
+          return productData.logisticsRecords.map((record: any) => ({
+            id: record.id,
+            type: record.status,
+            location: record.location,
+            actor: record.handler,
+            timestamp: record.timestamp,
+            notes: record.notes
+          }));
+        }
+        
+        return [];
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '获取物流事件历史失败');
+        }
+        throw new Error('获取物流事件历史失败');
+      }
+    }
+  },
+  
+  trace: {
+    search: async (query: string) => {
+      try {
+        const response = await apiClient.get(`/trace/search?query=${query}`);
+        
+        if (response.data.data && response.data.data.length > 0) {
+          const productData = response.data.data[0];
+          
+          return {
+            product: {
+              id: productData.product.id,
+              name: productData.product.name,
+              batchNo: productData.product.batchNo,
+              sku: productData.product.sku,
+              quantity: productData.product.quantity,
+              productionDate: productData.product.productionDate,
+              status: productData.product.status,
+              reference: productData.product.reference
+            },
+            events: productData.logisticsRecords.map((record: any) => ({
+              id: record.id,
+              type: record.status,
+              location: record.location,
+              actor: record.handler,
+              timestamp: record.timestamp,
+              notes: record.notes
+            })),
+            transactions: productData.transactions.map((transaction: any) => ({
+              id: transaction.id,
+              txId: transaction.txId,
+              amount: transaction.amount,
+              currency: transaction.currency,
+              fromCompany: transaction.from,
+              toCompany: transaction.to,
+              status: transaction.status,
+              reference: transaction.reference,
+              timestamp: transaction.timestamp,
+              description: transaction.notes
+            }))
+          };
+        }
+        
+        throw new Error("未找到相关溯源信息");
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.error || '溯源查询失败');
+        }
+        throw new Error('溯源查询失败');
+      }
+    }
+  },
+  
+  users: {
+    // 获取当前用户信息
+    getCurrent: async () => {
+      try {
+        const response = await apiClient.get('/users/current');
+        return response.data.data;
+      } catch (error: any) {
+        // 从localStorage获取用户信息，或者返回mock数据
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          return {
+            id: user.id || "user-1",
+            name: user.name || "Demo用户",
+            email: user.email || "demo@company.com",
+            companyName: user.companyName || "Demo科技有限公司",
+            role: "企业用户",
+            createdAt: "2025-01-01",
+            companyType: user.companyType || "生产厂商"
+          };
+        }
+        
+        // 默认mock数据
+        return {
+          id: "user-1",
+          name: "张三",
+          email: "zhang@company.com",
+          companyName: "ABC科技有限公司", 
+          role: "企业用户",
+          createdAt: "2025-01-01",
+          companyType: "生产厂商"
+        };
+      }
+    },
+    
+    // 获取所有用户列表
+    getAll: async () => {
+      try {
+        const response = await apiClient.get('/users');
+        return response.data.data;
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          throw new Error(error.response.data.message || '获取用户列表失败');
+        }
+        throw new Error('获取用户列表失败');
+      }
+    }
+  },
+  
+};
+
+/*
+// src/api/http.ts
+// 当前使用 mock 返回，后端 ready 后把实现改为 axios 实际调用
+export const api = {
+  auth: {
+    login: async (email: string, password: string) => {
+      // mock 登录：若邮箱非空直接返回 token
+      if (email && password) {
+        return { 
+          token: "mock-jwt-token", 
+          user: { 
+            id: "mock-user-id",
+            email: email, 
+            name: "Demo Company",
+            role: "manufacturer",
+            companyId: "mock-company-id"
+          } 
+        };
+      }
+      throw new Error("Invalid credentials");
+    },
+
+    register: async (userData: {
+      companyName: string;
+      contactPerson: string;
+      email: string;
+      password: string;
+      licenseNumber: string;
+      companyType: string;
+    }) => {
+      // mock 注册：如果邮箱非空就返回成功
+      if (userData.email && userData.password) {
+        return {
+          token: "mock-jwt-token-for-registration",
+          user: {
+            id: "mock-user-id",
+            email: userData.email,
+            name: userData.companyName,
+            role: "manufacturer",
+            companyId: "mock-company-id"
+          }
+        };
+      }
+      throw new Error("Registration failed");
     },
   },
 
@@ -564,3 +1058,4 @@ export const api = {
   
 };
 
+*/

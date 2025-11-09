@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['manufacturer', 'distributor', 'retailer', 'service']
+  },
+  balance: {
+    type: Number,
+    required: true,
+    default: 100000 // 为方便演示，设置一个默认余额
   }
 }, {
   timestamps: true

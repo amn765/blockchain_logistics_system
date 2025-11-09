@@ -12,6 +12,7 @@ const transactionRoutes = require('./routes/transaction');
 const userRoutes = require('./routes/user');
 const traceRoutes = require('./routes/trace');
 const dashboardRoutes = require('./routes/dashboard'); // 添加这一行
+const financeRoutes = require('./routes/finance'); 
 const auth = require('./middleware/auth')
 require('dotenv').config();
 
@@ -77,6 +78,8 @@ app.use('/api/logistics', logisticsRoutes);
 
 // Transaction routes (Protected)
 app.use('/api/transactions', transactionRoutes);
+
+app.use('/api/finance', financeRoutes);
 
 // Trace routes (Protected)
 app.use('/api/trace', traceRoutes); // 添加这一行

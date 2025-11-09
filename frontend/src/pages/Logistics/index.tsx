@@ -54,6 +54,7 @@ export default function Logistics() {
 
   const loadData = async () => {
     const res = await api.logistics.list();
+    // console.log(res)
     setList(res);
   };
 
@@ -101,20 +102,28 @@ export default function Logistics() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'success';
+      case 'arrived': return 'success';
+      case 'semi_arrived': return 'primary';
       case 'in_transit': return 'primary';
       case 'pending': return 'warning';
       case 'exception': return 'error';
+      case 'received': return 'info';
+      case 'shipped': return 'info'; 
+      case 'delivered': return 'success';
       default: return 'default';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case 'arrived': return '已送达';
       case 'delivered': return '已送达';
+      case 'semi_arrived': return '到达中转';
       case 'in_transit': return '运输中';
       case 'pending': return '待处理';
       case 'exception': return '异常';
+      case 'received': return '物流入库';
+      case 'shipped': return '物流出库'; 
       default: return status;
     }
   };
@@ -187,7 +196,7 @@ export default function Logistics() {
               <TableCell>商品编号</TableCell>
               <TableCell>名称</TableCell>
               <TableCell>状态</TableCell>
-              <TableCell>最后位置</TableCell>
+              <TableCell>当前位置</TableCell>
               <TableCell>经办方</TableCell>
               <TableCell>更新时间</TableCell>
               <TableCell>操作</TableCell>
@@ -210,13 +219,6 @@ export default function Logistics() {
                 <TableCell>{r.currentActor}</TableCell>
                 <TableCell>{r.updatedAt}</TableCell>
                 <TableCell>
-                  <Button 
-                    size="small" 
-                    onClick={() => alert("查看溯源（占位）")}
-                    sx={{ mr: 1 }}
-                  >
-                    溯源
-                  </Button>
                   <Button 
                     size="small" 
                     variant="outlined"

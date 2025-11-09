@@ -46,7 +46,7 @@ export default function CreatePaymentForm({ open, onClose, onSuccess }: CreatePa
     setError(null);
     
     // 简单验证
-    if (!form.toCompanyId || !form.amount || !form.reference) {
+    if (!form.payee || !form.amount || !form.reference) {
       setError('请填写必填字段');
       return;
     }
@@ -60,7 +60,7 @@ export default function CreatePaymentForm({ open, onClose, onSuccess }: CreatePa
 
     try {
       const result = await api.finance.createTransaction({
-        toCompanyId: form.toCompanyId,
+        toCompanyId: form.payee,
         amount: parseFloat(form.amount),
         currency: form.currency,
         reference: form.reference,
@@ -97,20 +97,13 @@ export default function CreatePaymentForm({ open, onClose, onSuccess }: CreatePa
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <FormControl fullWidth required>
-              <InputLabel>收款方</InputLabel>
-              <Select
-                value={form.toCompanyId}
-                label="收款方"
-                onChange={(e) => setForm({ ...form, toCompanyId: e.target.value })}
-              >
-                {partnerCompanies.map((company) => (
-                  <MenuItem key={company.id} value={company.id}>
-                    {company.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              label="收款方"
+              fullWidth
+              value={form.payee}
+              onChange={(e) => setForm({ ...form, payee: e.target.value })}
+              placeholder="请输入收款公司名称"
+            />
 
             <TextField
               required

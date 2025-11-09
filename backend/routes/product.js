@@ -11,9 +11,9 @@ const contract = require('../fabricMock');
 // 获取所有产品 (Protected)
 router.get('/', auth, async (req, res) => {
     try {
-        const result = await contract.evaluateTransaction('GetAllProducts');
-        const products = JSON.parse(result.toString());
-        res.json(products);
+        const result = await Product.find({});
+        console.log(result);
+        res.json(result);
     } catch (error) {
         console.error('Error getting products:', error);
         res.status(500).json({ error: 'Failed to get products' });
@@ -27,6 +27,7 @@ router.post('/', auth, async (req, res) => {
         const { sku, batchNo, quantity, productionDate, metadata, reference } = req.body;
         const owner = req.user.companyName; // 来自 auth 中间件
         const productId = `prod-${batchNo || Date.now()}`; // 生成唯一ID
+        console.log('Creating product:', productId, sku, owner);
 
         // 2. (模拟) 提交到 Fabric
         // 参数匹配 supplychain.go 的 CreateProduct

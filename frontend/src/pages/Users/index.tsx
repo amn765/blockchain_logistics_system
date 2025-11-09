@@ -18,6 +18,7 @@ interface UserInfo {
   role: string;
   createdAt: string;
   companyType: string;
+  balance: number;
 }
 
 export default function Users() {
@@ -30,10 +31,18 @@ export default function Users() {
   const loadUserInfo = async () => {
     try {
       const user = await api.users.getCurrent();
+      console.log('获取到的用户信息:', user);
       setUserInfo(user);
     } catch (error) {
       console.error("获取用户信息失败:", error);
     }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('zh-CN', {
+      style: 'currency',
+      currency: 'CNY'
+    }).format(amount);
   };
 
   if (!userInfo) {
@@ -65,10 +74,10 @@ export default function Users() {
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  姓名
+                  联系人
                 </Typography>
                 <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}>
-                  {userInfo.name}
+                  {userInfo.contactPerson}
                 </Typography>
               </CardContent>
             </Card>
@@ -95,6 +104,19 @@ export default function Users() {
                 </Typography>
                 <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}>
                   {userInfo.companyName}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} lg={4}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  账户余额
+                </Typography>
+                <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' }, color: 'primary.main' }}>
+                  {formatCurrency(userInfo.balance)}
                 </Typography>
               </CardContent>
             </Card>
@@ -142,11 +164,6 @@ export default function Users() {
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 3, p: { xs: 2, sm: 3 }, bgcolor: 'grey.50', borderRadius: 2 }}>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-            💡 当前为演示版本，所有用户均具有完整操作权限，可以执行新增批次、物流追踪、资金流转等所有功能。
-          </Typography>
-        </Box>
       </Paper>
     </Box>
   );
