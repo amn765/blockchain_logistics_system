@@ -26,8 +26,23 @@ const statusOptions = [
   { value: 'all', label: '全部' },
   { value: 'pending', label: '待处理' },
   { value: 'in_transit', label: '运输中' },
-  { value: 'delivered', label: '已送达' },
+  { value: 'arrived', label: '已送达' },
+  { value: 'shipped', label: '已出库' },
+  { value: 'semi_arrived', label: '到达中转' },
+  { value: 'received', label: '已入库' },
   { value: 'exception', label: '异常' }
+  /*
+  
+      case 'arrived': return 'success';
+      case 'semi_arrived': return 'primary';
+      case 'in_transit': return 'primary';
+      case 'pending': return 'warning';
+      case 'exception': return 'error';
+      case 'received': return 'info';
+      case 'shipped': return 'info'; 
+      case 'delivered': return 'success';
+  
+  */
 ];
 
 export default function Logistics() {
