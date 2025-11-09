@@ -107,7 +107,7 @@ supply-chain-tracker/
 
 6. **启动前端应用**
    ```bash
-   npm start
+   npm run dev
    ```
 
 ## 部署说明

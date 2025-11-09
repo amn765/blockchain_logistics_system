@@ -5,7 +5,8 @@ const router = express.Router();
 const LogisticsRecord = require('../models/LogisticsEvent');
 const Product = require('../models/Product');
 const auth = require('../middleware/auth');
-const contract = require('../fabricMock');
+// const contract = require('../fabricMock');
+const contract = require('../fabricReal');
 
 // 添加物流事件 (Protected)
 router.post('/', auth, async (req, res) => {

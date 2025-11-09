@@ -6,7 +6,8 @@ const upload = multer({ dest: 'uploads/' });
 // 引入模型和中间件
 const Product = require('../models/Product');
 const auth = require('../middleware/auth');
-const contract = require('../fabricMock');
+// const contract = require('../fabricMock');
+const contract = require('../fabricReal');
 
 // 获取所有产品 (Protected)
 router.get('/', auth, async (req, res) => {
@@ -30,13 +31,14 @@ router.post('/', auth, async (req, res) => {
         console.log('Creating product:', productId, sku, owner);
 
         // 2. (模拟) 提交到 Fabric
-        // 参数匹配 supplychain.go 的 CreateProduct
+        // 参数匹配 supplychain.go 的 CreateProduct (id, name, description, owner, priceStr)
         await contract.submitTransaction(
             'CreateProduct',
             productId,
             sku, // 对应链码的 'name'
             metadata.origin || 'N/A', // 对应链码的 'description'
-            owner
+            owner,
+            '100.00' // 价格参数，暂时固定为100.00
         );
 
         // 3. 真实写入 MongoDB (使用你的 Product 模型)

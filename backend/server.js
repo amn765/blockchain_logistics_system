@@ -50,14 +50,27 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/supplycha
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB connected'))
+.then(async () => {
+    console.log('MongoDB connected');
+
+    // MongoDB 连接成功后，初始化 Fabric 客户端
+    try {
+        console.log('正在连接到 Hyperledger Fabric 网络...');
+        await contract.connect();
+        console.log('✅ Fabric 网络连接成功');
+    } catch (error) {
+        console.error('❌ Fabric 网络连接失败:', error.message);
+        console.log('⚠️  系统将继续运行，但区块链功能将不可用');
+    }
+})
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Hyperledger Fabric connection
 let gateway;
 let network;
 let contract;
-contract = require('./fabricMock');
+// contract = require('./fabricMock');
+contract = require('./fabricReal');
 
 // Routes
 app.get('/api/health', (req, res) => {

@@ -4,7 +4,8 @@ const router = express.Router();
 // 引入模型和中间件
 const Transaction = require('../models/Transaction');
 const auth = require('../middleware/auth');
-const contract = require('../fabricMock');
+// const contract = require('../fabricMock');
+const contract = require('../fabricReal');
 
 // 获取交易列表 (Protected)
 router.get('/', auth, async (req, res) => {

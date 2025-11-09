@@ -128,7 +128,7 @@ export default function CreatePaymentForm({ open, onClose, onSuccess }: CreatePa
 
             <TextField
               required
-              label="参考编号"
+              label="商品编号"
               value={form.reference}
               onChange={(e) => setForm({ ...form, reference: e.target.value })}
               placeholder="例如：INV-202501001"
