@@ -196,7 +196,7 @@ export default function Logistics() {
               <TableCell>商品编号</TableCell>
               <TableCell>名称</TableCell>
               <TableCell>状态</TableCell>
-              <TableCell>最后位置</TableCell>
+              <TableCell>当前位置</TableCell>
               <TableCell>经办方</TableCell>
               <TableCell>更新时间</TableCell>
               <TableCell>操作</TableCell>

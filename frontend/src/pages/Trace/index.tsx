@@ -254,7 +254,7 @@ export default function Trace() {
                         <strong>收款方：</strong>{item.toCompany}
                       </Typography>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                        <strong>交易哈希：</strong>{item.txId}
+                        <strong>交易哈希：</strong>{item.id}
                       </Typography>
                       <Chip 
                         label={item.status === 'CONFIRMED' ? '已确认' : item.status}
